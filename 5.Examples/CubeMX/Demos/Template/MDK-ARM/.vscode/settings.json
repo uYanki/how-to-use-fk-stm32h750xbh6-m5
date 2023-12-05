@@ -1,0 +1,12 @@
+{
+    "files.associations": {
+        "main.h": "c",
+        "app.h": "c",
+        "bsp_uart.h": "c",
+        "bsp_led.h": "c",
+        "bsp.h": "c",
+        "usart.h": "c",
+        "sleep.h": "c",
+        "gpio.h": "c"
+    }
+}
