@@ -339,7 +339,7 @@
               <MiscControls></MiscControls>
               <Define>USE_HAL_DRIVER,STM32H750xx</Define>
               <Undefine></Undefine>
-              <IncludePath>../Core/Inc;C:/Users/uYanki/STM32Cube/Repository/STM32Cube_FW_H7_V1.10.0/Drivers/STM32H7xx_HAL_Driver/Inc;C:/Users/uYanki/STM32Cube/Repository/STM32Cube_FW_H7_V1.10.0/Drivers/STM32H7xx_HAL_Driver/Inc/Legacy;C:/Users/uYanki/STM32Cube/Repository/STM32Cube_FW_H7_V1.10.0/Drivers/CMSIS/Device/ST/STM32H7xx/Include;C:/Users/uYanki/STM32Cube/Repository/STM32Cube_FW_H7_V1.10.0/Drivers/CMSIS/Include;../../../BspDrv</IncludePath>
+              <IncludePath>../Core/Inc;C:/Users/uYanki/STM32Cube/Repository/STM32Cube_FW_H7_V1.10.0/Drivers/STM32H7xx_HAL_Driver/Inc;C:/Users/uYanki/STM32Cube/Repository/STM32Cube_FW_H7_V1.10.0/Drivers/STM32H7xx_HAL_Driver/Inc/Legacy;C:/Users/uYanki/STM32Cube/Repository/STM32Cube_FW_H7_V1.10.0/Drivers/CMSIS/Device/ST/STM32H7xx/Include;C:/Users/uYanki/STM32Cube/Repository/STM32Cube_FW_H7_V1.10.0/Drivers/CMSIS/Include;../../../Board</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -528,7 +528,7 @@
             <File>
               <FileName>sleep.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\BspDrv\system\sleep.c</FilePath>
+              <FilePath>..\..\..\Board\system\sleep.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -536,14 +536,14 @@
           <GroupName>Drivers/User/Bsp</GroupName>
           <Files>
             <File>
-              <FileName>bsp_uart.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\BspDrv\serial\bsp_uart.c</FilePath>
-            </File>
-            <File>
               <FileName>bsp_led.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\BspDrv\pinctrl\bsp_led.c</FilePath>
+              <FilePath>..\..\..\Board\pinctrl\bsp_led.c</FilePath>
+            </File>
+            <File>
+              <FileName>bsp_uart.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\Board\serial\bsp_uart.c</FilePath>
             </File>
           </Files>
         </Group>

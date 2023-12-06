@@ -8,14 +8,14 @@
                 "C:\\Users\\uYanki\\STM32Cube\\Repository\\STM32Cube_FW_H7_V1.10.0\\Drivers\\STM32H7xx_HAL_Driver\\Inc\\Legacy",
                 "C:\\Users\\uYanki\\STM32Cube\\Repository\\STM32Cube_FW_H7_V1.10.0\\Drivers\\CMSIS\\Device\\ST\\STM32H7xx\\Include",
                 "C:\\Users\\uYanki\\STM32Cube\\Repository\\STM32Cube_FW_H7_V1.10.0\\Drivers\\CMSIS\\Include",
-                "f:\\how-to-use-fk-stm32h750xbh6-m4\\5.Examples\\CubeMX\\BspDrv",
+                "f:\\how-to-use-fk-stm32h750xbh6-m4\\5.Examples\\CubeMX\\Board",
                 "C:\\Keil_v5\\ARM\\ARMCC\\include",
                 "C:\\Keil_v5\\ARM\\ARMCC\\include\\rw",
                 "f:\\how-to-use-fk-stm32h750xbh6-m4\\5.Examples\\CubeMX\\Demos\\template\\MDK-ARM",
                 "f:\\how-to-use-fk-stm32h750xbh6-m4\\5.Examples\\CubeMX\\Demos\\template\\Core\\Src",
-                "f:\\how-to-use-fk-stm32h750xbh6-m4\\5.Examples\\CubeMX\\BspDrv\\system",
-                "f:\\how-to-use-fk-stm32h750xbh6-m4\\5.Examples\\CubeMX\\BspDrv\\serial",
-                "f:\\how-to-use-fk-stm32h750xbh6-m4\\5.Examples\\CubeMX\\BspDrv\\pinctrl",
+                "f:\\how-to-use-fk-stm32h750xbh6-m4\\5.Examples\\CubeMX\\Board\\system",
+                "f:\\how-to-use-fk-stm32h750xbh6-m4\\5.Examples\\CubeMX\\Board\\serial",
+                "f:\\how-to-use-fk-stm32h750xbh6-m4\\5.Examples\\CubeMX\\Board\\pinctrl",
                 "C:\\Users\\uYanki\\STM32Cube\\Repository\\STM32Cube_FW_H7_V1.10.0\\Drivers\\STM32H7xx_HAL_Driver\\Src"
             ],
             "defines": [
