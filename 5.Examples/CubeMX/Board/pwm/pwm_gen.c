@@ -12,8 +12,10 @@
  *
  * @return none
  */
-void PWM_ParaGen(uint32_t clk, uint32_t frq, uint16_t duty, uint32_t* psc, uint32_t* prd, uint32_t* pls)
+void PWM_ParaGen(uint32_t clk, uint32_t frq, uint16_t duty, __IO uint32_t* psc, __IO uint32_t* prd, __IO uint32_t* pls)
 {
+    // frq = clk / psc / prd
+
     if (frq < 100)
     {
         *psc = 1e4;
@@ -43,8 +45,8 @@ void PWM_Out(TIM_HandleTypeDef* htim, uint32_t channel, uint32_t frq, uint16_t d
 {
     uint32_t clk;  // tim clkin
 
-    TIM_TypeDef* TIMx = htim->Instance;
-    uint32_t*    TIM_CCR;
+    TIM_TypeDef*   TIMx = htim->Instance;
+    __IO uint32_t* TIM_CCR;
 
 #if 0
     // The frequency of clocks mounted on different buses may vary

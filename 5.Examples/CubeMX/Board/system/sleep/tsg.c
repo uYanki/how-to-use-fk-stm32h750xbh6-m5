@@ -3,8 +3,8 @@
 /// @note: the TSG clock frequency is half of the system clock
 
 #define TSG_REG_BASE  0x5C005000
-#define TSG_REG_CNTCR *(vu32*)(TSG_REG_BASE + 0x00)
-#define TSG_REG_CNTCV *(vu64*)(TSG_REG_BASE + 0x08)
+#define TSG_REG_CNTCR *(__IO uint32_t*)(TSG_REG_BASE + 0x00)
+#define TSG_REG_CNTCV *(__IO uint64_t*)(TSG_REG_BASE + 0x08)
 
 void TSG_Init(void)
 {
@@ -21,7 +21,7 @@ void TSG_Init(void)
 // 64-bit timestamp
 uint64_t TSG_GetTick(void)
 {
-    return TSG_REG_CNTCV;
+    return TSG_REG_CNTCV;  // half of DWT
 }
 
 void TSG_DelayUS(uint64_t us)
@@ -31,7 +31,7 @@ void TSG_DelayUS(uint64_t us)
     nTickStart = TSG_REG_CNTCV;
 
     // us to tick
-    nTickDelta = us * (CONFIG_SYSCLK / 2e6);
+    nTickDelta = us * (SystemCoreClock / 2e6);
 
     nTickEnd = nTickStart + nTickDelta;
 
@@ -62,5 +62,5 @@ uint64_t TSG_TickToUs(uint64_t nTickStart, uint64_t nTickEnd)
         nTickDelta = UINT64_MAX - (nTickStart - nTickEnd) + 1;
     }
 
-    return nTickDelta / (CONFIG_SYSCLK / 2e6);
+    return nTickDelta / (SystemCoreClock / 2e6);
 }

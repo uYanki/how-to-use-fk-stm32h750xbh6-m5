@@ -18,7 +18,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "tim.h"
+#include "adc.h"
+#include "bdma.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -51,14 +52,64 @@
 void        SystemClock_Config(void);
 static void MPU_Config(void);
 /* USER CODE BEGIN PFP */
-
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-#define LOG_TSG(t) c1 = TSG_GetTick(), c2 = DWT_GetTick(), DWT_DelayUS(t), printf("after %10d: tsg = %30llu, dwt = %20d\n", t, TSG_TickToUs(c1, TSG_GetTick()), DWT_TickToUs(c2, DWT_GetTick()))
 
-#include "pwm/pwm_gen.c"
+/* 方便Cache类的API操作，做32字节对齐 */
+#if defined(__ICCARM__)
+#pragma location = 0x38000000
+uint16_t aAdVals[4];
+#elif defined(__CC_ARM)
+ALIGN_32BYTES(__attribute__((section(".RAM_D3"))) uint16_t aAdVals[4]);
+#endif
+// ALIGN_32BYTES(__attribute__((section(".RAM_D3"))) uint16_t aAdVals[4]);
+
+// ALIGN_32BYTES(static uint16_t aAdVals[4])
+//__attribute__((section(".ARM.__at_0x24000000")));
+
+/* 选择ADC的时钟源 */
+// #define ADC_CLOCK_SOURCE_AHB     /* 选择AHB时钟源 */
+#define ADC_CLOCK_SOURCE_PLL /* 选择PLL时钟源 */
+
+/* 方便Cache类的API操作，做32字节对齐 */
+#if defined(__ICCARM__)
+#pragma location = 0x38000000
+uint16_t ADCxValues[4];
+#elif defined(__CC_ARM)
+ALIGN_32BYTES(__attribute__((section(".RAM_D3"))) uint16_t ADCxValues[4]);
+#endif
+
+//__attribute__((at(0x38000080))) uint16_t ADCxValues[2]={0x00,0x00};
+
+ALIGN_32BYTES(static uint16_t ADCxValues[4])
+__attribute__((section(".ARM.0x38000080")));
+DMA_HandleTypeDef DMA_Handle = {0};
+
+void bsp_GetAdcValues(void)
+{
+    float    AdcValues[5];
+    uint16_t TS_CAL1;
+    uint16_t TS_CAL2;
+
+    /*
+       使用此函数要特别注意，第1个参数地址要32字节对齐，第2个参数要是32字节的整数倍
+    */
+    SCB_InvalidateDCache_by_Addr((uint32_t*)ADCxValues, sizeof(ADCxValues));
+    AdcValues[0] = ADCxValues[0] * 3.3 / 65536;
+    AdcValues[1] = ADCxValues[1] * 3.3 / 65536;
+    AdcValues[2] = ADCxValues[2] * 3.3 / 65536;
+
+    /* 根据参考手册给的公式计算温度值 */
+    TS_CAL1 = *(__IO uint16_t*)(0x1FF1E820);
+    TS_CAL2 = *(__IO uint16_t*)(0x1FF1E840);
+
+    AdcValues[3] = (110.0 - 30.0) * (ADCxValues[3] - TS_CAL1) / (TS_CAL2 - TS_CAL1) + 30;
+
+    printf("PC0 = %5.3fV, Vbat/4 = %5.3fV, VrefInt = %5.3fV， TempSensor = %5.3f℃\n",
+           AdcValues[0], AdcValues[1], AdcValues[2], AdcValues[3]);
+}
 
 /* USER CODE END 0 */
 
@@ -74,6 +125,9 @@ int main(void)
 
     /* MPU Configuration--------------------------------------------------------*/
     MPU_Config();
+
+    /* Enable D-Cache---------------------------------------------------------*/
+    SCB_EnableDCache();
 
     /* MCU Configuration--------------------------------------------------------*/
 
@@ -93,22 +147,71 @@ int main(void)
 
     /* Initialize all configured peripherals */
     MX_GPIO_Init();
+    MX_BDMA_Init();
     MX_USART1_UART_Init();
-    MX_TIM1_Init();
+    MX_ADC3_Init();
     /* USER CODE BEGIN 2 */
-    TSG_Init();
-    DWT_Init();
+
+    DelayNonInit();
+
+    //  if (HAL_ADCEx_Calibration_Start(&hadc3, ADC_CALIB_OFFSET, ADC_SINGLE_ENDED) != HAL_OK)
+    {
+        //   Error_Handler();
+    }
+
+    // HAL_ADC_Start(&hadc3);
+    // HAL_ADC_Start_DMA(&hadc3, (uint32_t*)aAdVals, 4);
+    // bsp_InitADC();
+    ADC_Enable(&hadc3);
+    HAL_ADC_Start_DMA(&hadc3, (uint32_t*)ADCxValues, 4);
+    HAL_ADC_Start(&hadc3);
     /* USER CODE END 2 */
 
     /* Infinite loop */
     /* USER CODE BEGIN WHILE */
-    PWM_Out(&htim1, TIM_CHANNEL_1, 2e4, 6000);
     while (1)
     {
-        // LOG_TSG(2);
-        // LOG_TSG(20);
-        // LOG_TSG(500000);
-        // LOG_TSG(3000000);
+        static uint32_t tAdSample = 0;
+
+        if (DelayNonBlockMS(tAdSample, 1000))
+        {
+            tAdSample = DelayNonGetTick();
+
+            bsp_GetAdcValues();
+
+            //            float afAdVals[4];
+
+            //            SCB_InvalidateDCache_by_Addr((uint32_t*)aAdVals, sizeof(aAdVals));
+
+            // HAL_ADC_Start(&hadc3);
+            // HAL_ADC_PollForConversion(&hadc3, 0xFFFFF);
+            // aAdVals[0] = HAL_ADC_GetValue(&hadc3);
+
+            // HAL_ADC_Start(&hadc3);
+            // HAL_ADC_PollForConversion(&hadc3, 0xFFFFF);
+            // aAdVals[1] = HAL_ADC_GetValue(&hadc3);
+
+            // HAL_ADC_Start(&hadc3);
+            // HAL_ADC_PollForConversion(&hadc3, 0xFFFFF);
+            // aAdVals[2] = HAL_ADC_GetValue(&hadc3);
+
+            // HAL_ADC_Start(&hadc3);
+            // HAL_ADC_PollForConversion(&hadc3, 0xFFFFF);
+            // aAdVals[3] = HAL_ADC_GetValue(&hadc3);
+
+            //            afAdVals[0] = aAdVals[0] * 3.3 / 65536;
+            //            afAdVals[1] = aAdVals[1] * 3.3 / 65536;
+            //            afAdVals[2] = aAdVals[2] * 3.3 / 65536;
+            //            afAdVals[3] = aAdVals[3] * 3.3 / 65536;
+
+            //            printf("%f,%f,%f,%f\n",
+            //                   afAdVals[0],
+            //                   afAdVals[1],
+            //                   afAdVals[2],
+            //                   afAdVals[3]);
+
+            // HAL_ADCEx_Calibration_Start();
+        }
 
         /* USER CODE END WHILE */
 

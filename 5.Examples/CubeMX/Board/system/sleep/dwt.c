@@ -1,16 +1,16 @@
 #include "../sleep.h"
 
 // Debug Exception and Monitor Control Register
-#define DEM_REG_CR           *(vu32*)0xE000EDFC
+#define DEM_REG_CR           *(__IO uint32_t*)0xE000EDFC
 #define DEM_MSK_CR_TRCENA    BV(24)
 
 // Debug Watchpoint and Trace (DWT) unit
 #define DWT_REG_BASE         0xE0001000
 // Control Register
-#define DWT_REG_CR           *(vu32*)(DWT_REG_BASE + 0x00)
+#define DWT_REG_CR           *(__IO uint32_t*)(DWT_REG_BASE + 0x00)
 #define DWT_MSK_CR_CYCCNTENA BV(0)
 // Cycle Count register
-#define DWT_REG_CYCCNT       *(vu32*)(DWT_REG_BASE + 0x04)
+#define DWT_REG_CYCCNT       *(__IO uint32_t*)(DWT_REG_BASE + 0x04)
 
 void DWT_Init(void)
 {

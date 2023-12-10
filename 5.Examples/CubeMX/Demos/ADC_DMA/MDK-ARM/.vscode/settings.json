@@ -7,12 +7,6 @@
         "bsp.h": "c",
         "usart.h": "c",
         "sleep.h": "c",
-        "gpio.h": "c",
-        "queue": "c",
-        "sleep_dwt.h": "c",
-        "sleep_tsg.h": "c",
-        "tim.h": "c",
-        "tsg.h": "c",
-        "stdbool.h": "c"
+        "gpio.h": "c"
     }
 }
