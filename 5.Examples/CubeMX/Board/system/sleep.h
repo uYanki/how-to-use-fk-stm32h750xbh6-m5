@@ -49,10 +49,10 @@ typedef uint64_t tick_t;
 #define DelayBlockMS(t) DelayBlock((t) * (UNIT1_MS))
 #define DelayBlockS(t)  DelayBlock((t) * (UNIT1_S))
 
-inline void   DelayInit(void);
-inline tick_t DelayGetTick(void);
-inline void   DelayBlock(tick_t nWaitTime);
-inline tick_t DelayCalcDelta(tick_t nStartTick, tick_t nEndTick);
+void   DelayInit(void);
+tick_t DelayGetTick(void);
+void   DelayBlock(tick_t nWaitTime);
+tick_t DelayCalcDelta(tick_t nStartTick, tick_t nEndTick);
 
 //
 
@@ -60,9 +60,9 @@ inline tick_t DelayCalcDelta(tick_t nStartTick, tick_t nEndTick);
 #define DelayNonBlockMS(s, t) DelayNonBlock(s, (t) * (UNIT2_MS))
 #define DelayNonBlockS(s, t)  DelayNonBlock(s, (t) * (UNIT2_S))
 
-inline void     DelayNonInit(void);
-inline uint32_t DelayNonGetTick(void);
-inline bool     DelayNonBlock(uint32_t nStartTick, uint32_t nWaitTime);
+void     DelayNonInit(void);
+uint32_t DelayNonGetTick(void);
+bool     DelayNonBlock(uint32_t nStartTick, uint32_t nWaitTime);
 
 //
 

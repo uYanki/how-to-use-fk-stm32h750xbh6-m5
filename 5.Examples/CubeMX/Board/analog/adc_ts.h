@@ -1,9 +1,10 @@
-// temperature sensor
+#ifndef __ADC_TS_H__
+#define __ADC_TS_H__
 
-float ConvTemp(uint16_t advalue)
-{
-    uint16_t TS_CAL1 = *(__IO uint16_t*)(0x1FF1E820);
-    uint16_t TS_CAL2 = *(__IO uint16_t*)(0x1FF1E840);
+#include "stm32h7xx_hal.h"
 
-    return (110.0 - 30.0) * (advalue - TS_CAL1) / (TS_CAL2 - TS_CAL1) + 30;
-}
+#define AD2VOL(ADConv) (3.3 * (uint32_t)ADConv / 65535)
+
+float TS_ConvTemp(uint16_t ADConv);
+
+#endif

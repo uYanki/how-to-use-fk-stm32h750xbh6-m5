@@ -7,6 +7,12 @@
         "bsp.h": "c",
         "usart.h": "c",
         "sleep.h": "c",
-        "gpio.h": "c"
+        "gpio.h": "c",
+        "adc_ts.h": "c",
+        "stm32h7xx_hal.h": "c",
+        "tsg.h": "c",
+        "dwt.h": "c",
+        "array": "c",
+        "string_view": "c"
     }
 }
