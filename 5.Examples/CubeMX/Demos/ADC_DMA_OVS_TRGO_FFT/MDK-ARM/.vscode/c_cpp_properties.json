@@ -9,6 +9,7 @@
                 "C:\\Users\\uYanki\\STM32Cube\\Repository\\STM32Cube_FW_H7_V1.11.1\\Drivers\\STM32H7xx_HAL_Driver\\Inc\\Legacy",
                 "C:\\Users\\uYanki\\STM32Cube\\Repository\\STM32Cube_FW_H7_V1.11.1\\Drivers\\CMSIS\\Device\\ST\\STM32H7xx\\Include",
                 "C:\\Users\\uYanki\\STM32Cube\\Repository\\STM32Cube_FW_H7_V1.11.1\\Drivers\\CMSIS\\Include",
+                "C:\\Users\\uYanki\\AppData\\Local\\Arm\\Packs\\ARM\\CMSIS\\5.8.0\\CMSIS\\DSP\\Include",
                 "C:\\Keil_v5\\ARM\\ARMCLANG\\include",
                 "C:\\Keil_v5\\ARM\\ARMCLANG\\include\\arm_linux",
                 "C:\\Keil_v5\\ARM\\ARMCLANG\\include\\arm_linux_compat",
@@ -24,6 +25,7 @@
             "defines": [
                 "USE_HAL_DRIVER",
                 "STM32H750xx",
+                "ARM_MATH_CM7",
                 "__alignof__(x)=",
                 "__asm(x)=",
                 "__asm__(x)=",

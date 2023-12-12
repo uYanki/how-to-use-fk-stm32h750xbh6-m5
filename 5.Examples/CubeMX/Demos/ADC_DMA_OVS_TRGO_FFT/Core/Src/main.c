@@ -65,6 +65,16 @@ static void MPU_Config(void);
 //-----------------------------------------------------------------------------
 //
 
+#define FFT_N 1024
+
+static float32_t aI[FFT_N ] = {0};
+static float32_t aFFT[FFT_N * 2] = {0};
+static float32_t aMag[FFT_N]     = {0};
+static float32_t aPhase[FFT_N]   = {0};
+
+//-----------------------------------------------------------------------------
+//
+
 #if defined(__CC_ARM)  // AC5
 #define __AT_ADDR(addr) __attribute__((at(addr)))
 #elif defined(__GNUC__)  // AC6
@@ -75,7 +85,7 @@ __AT_ADDR(0x24000000)
 ALIGN_32BYTES(__IO uint16_t ADC1_Conv[2]) = {0};  // AXI
 
 __AT_ADDR(0x24000000)
-ALIGN_32BYTES(__IO uint16_t ADC2_Conv[2048]) = {0};  // AXI
+ALIGN_32BYTES(__IO uint16_t ADC2_Conv[FFT_N * 2]) = {0};  // AXI
 
 __AT_ADDR(0x38000000)
 ALIGN_32BYTES(__IO uint16_t ADC3_Conv[4]) = {0};  // SRAM4
@@ -83,8 +93,7 @@ ALIGN_32BYTES(__IO uint16_t ADC3_Conv[4]) = {0};  // SRAM4
 //-----------------------------------------------------------------------------
 //
 
-static uint8_t        ADC2_Conv_DmaStage = 0;
-static const uint16_t ADC2_Conv_HalfSize = ARRAY_SIZE(ADC2_Conv) / 2;
+static uint8_t ADC2_Conv_DmaStage = 0;
 
 void ADC2_DMA_CallBack(void)  // call in DMAx_Streamx_IRQHandler()
 {
@@ -92,12 +101,12 @@ void ADC2_DMA_CallBack(void)  // call in DMAx_Streamx_IRQHandler()
 
     if ((DMA1->LISR & DMA_FLAG_HTIF1_5) != RESET)  // HalfCplt
     {
-        SCB_InvalidateDCache_by_Addr((uint32_t*)(&ADC2_Conv[0]), ADC2_Conv_HalfSize);
+        SCB_InvalidateDCache_by_Addr((uint32_t*)(&ADC2_Conv[0]), FFT_N);
         ADC2_Conv_DmaStage = 1;
     }
     else if ((DMA1->LISR & DMA_FLAG_TCIF1_5) != RESET)  // Cplt
     {
-        SCB_InvalidateDCache_by_Addr((uint32_t*)(&ADC2_Conv[ADC2_Conv_HalfSize]), ADC2_Conv_HalfSize);
+        SCB_InvalidateDCache_by_Addr((uint32_t*)(&ADC2_Conv[FFT_N]), FFT_N);
         ADC2_Conv_DmaStage = 2;
     }
 }
@@ -151,6 +160,7 @@ int main(void)
     /* USER CODE BEGIN 2 */
 
     DelayNonInit();
+    ADC2_FFT_Proc(0);
 
     uint32_t ADC_CalibrationMode;
 #if 1

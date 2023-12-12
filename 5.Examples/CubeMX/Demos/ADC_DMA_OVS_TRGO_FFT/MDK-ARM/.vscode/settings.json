@@ -13,6 +13,8 @@
         "tsg.h": "c",
         "dwt.h": "c",
         "array": "c",
-        "string_view": "c"
+        "string_view": "c",
+        "arm_math.h": "c",
+        "stm32h750xx.h": "c"
     }
 }
