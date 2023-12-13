@@ -337,9 +337,9 @@
             <v6Rtti>0</v6Rtti>
             <VariousControls>
               <MiscControls></MiscControls>
-              <Define>USE_HAL_DRIVER,STM32H750xx,ARM_MATH_CM7,</Define>
+              <Define>USE_HAL_DRIVER,STM32H750xx,ARM_MATH_CM7</Define>
               <Undefine></Undefine>
-              <IncludePath>../Core/Inc;../../../Board;C:/Users/uYanki/STM32Cube/Repository/STM32Cube_FW_H7_V1.11.1/Drivers/STM32H7xx_HAL_Driver/Inc;C:/Users/uYanki/STM32Cube/Repository/STM32Cube_FW_H7_V1.11.1/Drivers/STM32H7xx_HAL_Driver/Inc/Legacy;C:/Users/uYanki/STM32Cube/Repository/STM32Cube_FW_H7_V1.11.1/Drivers/CMSIS/Device/ST/STM32H7xx/Include;C:/Users/uYanki/STM32Cube/Repository/STM32Cube_FW_H7_V1.11.1/Drivers/CMSIS/Include;C:\Users\uYanki\AppData\Local\Arm\Packs\ARM\CMSIS\5.8.0\CMSIS\DSP\Include</IncludePath>
+              <IncludePath>../Core/Inc;../../../Board;C:/Users/uYanki/STM32Cube/Repository/STM32Cube_FW_H7_V1.11.1/Drivers/STM32H7xx_HAL_Driver/Inc;C:/Users/uYanki/STM32Cube/Repository/STM32Cube_FW_H7_V1.11.1/Drivers/STM32H7xx_HAL_Driver/Inc/Legacy;C:/Users/uYanki/STM32Cube/Repository/STM32Cube_FW_H7_V1.11.1/Drivers/CMSIS/Device/ST/STM32H7xx/Include;C:/Users/uYanki/STM32Cube/Repository/STM32Cube_FW_H7_V1.11.1/Drivers/CMSIS/Include;C:/Users/uYanki/AppData/Local/Arm/Packs/ARM/CMSIS/5.8.0/CMSIS/DSP/Include</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -773,6 +773,16 @@
               <FileName>adc_ts.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\Board\analog\adc_ts.c</FilePath>
+            </File>
+            <File>
+              <FileName>arm_atan2_f32.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\Board\analog\arm_atan2_f32.c</FilePath>
+            </File>
+            <File>
+              <FileName>dsp_fft.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\Board\analog\dsp_fft.c</FilePath>
             </File>
           </Files>
         </Group>

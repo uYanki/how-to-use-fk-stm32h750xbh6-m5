@@ -15,6 +15,9 @@
         "array": "c",
         "string_view": "c",
         "arm_math.h": "c",
-        "stm32h750xx.h": "c"
+        "stm32h750xx.h": "c",
+        "dsp_fft.h": "c",
+        "string.h": "c",
+        "stdio.h": "c"
     }
 }

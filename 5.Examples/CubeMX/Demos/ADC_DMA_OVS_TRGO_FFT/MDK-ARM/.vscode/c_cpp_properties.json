@@ -3,7 +3,7 @@
         {
             "name": "demo",
             "includePath": [
-                "f:\\how-to-use-fk-stm32h750xbh6-m4\\5.Examples\\CubeMX\\Demos\\ADC_DMA\\Core\\Inc",
+                "f:\\how-to-use-fk-stm32h750xbh6-m4\\5.Examples\\CubeMX\\Demos\\ADC_DMA_OVS_TRGO_FFT\\Core\\Inc",
                 "f:\\how-to-use-fk-stm32h750xbh6-m4\\5.Examples\\CubeMX\\Board",
                 "C:\\Users\\uYanki\\STM32Cube\\Repository\\STM32Cube_FW_H7_V1.11.1\\Drivers\\STM32H7xx_HAL_Driver\\Inc",
                 "C:\\Users\\uYanki\\STM32Cube\\Repository\\STM32Cube_FW_H7_V1.11.1\\Drivers\\STM32H7xx_HAL_Driver\\Inc\\Legacy",
@@ -14,8 +14,8 @@
                 "C:\\Keil_v5\\ARM\\ARMCLANG\\include\\arm_linux",
                 "C:\\Keil_v5\\ARM\\ARMCLANG\\include\\arm_linux_compat",
                 "C:\\Keil_v5\\ARM\\ARMCLANG\\include\\libcxx",
-                "f:\\how-to-use-fk-stm32h750xbh6-m4\\5.Examples\\CubeMX\\Demos\\ADC_DMA\\MDK-ARM",
-                "f:\\how-to-use-fk-stm32h750xbh6-m4\\5.Examples\\CubeMX\\Demos\\ADC_DMA\\Core\\Src",
+                "f:\\how-to-use-fk-stm32h750xbh6-m4\\5.Examples\\CubeMX\\Demos\\ADC_DMA_OVS_TRGO_FFT\\MDK-ARM",
+                "f:\\how-to-use-fk-stm32h750xbh6-m4\\5.Examples\\CubeMX\\Demos\\ADC_DMA_OVS_TRGO_FFT\\Core\\Src",
                 "f:\\how-to-use-fk-stm32h750xbh6-m4\\5.Examples\\CubeMX\\Board\\system",
                 "f:\\how-to-use-fk-stm32h750xbh6-m4\\5.Examples\\CubeMX\\Board\\pinctrl",
                 "f:\\how-to-use-fk-stm32h750xbh6-m4\\5.Examples\\CubeMX\\Board\\serial",

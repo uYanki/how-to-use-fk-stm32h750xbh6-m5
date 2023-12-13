@@ -2,7 +2,7 @@
 
 ```
 ADC1: 26-bit Oversampling + DMA
-ADC2: TIM TRGO (Update Event) + Double Buffer + DMA
+ADC2: TIM TRGO (Update Event) + Double Buffer + DMA + FFT
 ADC3: TempSensor + DMA
 ```
 
