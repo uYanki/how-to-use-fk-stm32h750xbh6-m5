@@ -2,6 +2,7 @@
     "files.associations": {
         "sleep.h": "c",
         "sleep_tsg.h": "c",
-        "sleep_dwt.h": "c"
+        "sleep_dwt.h": "c",
+        "system.h": "c"
     }
 }
