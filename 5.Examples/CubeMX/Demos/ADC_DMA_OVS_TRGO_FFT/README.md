@@ -4,11 +4,21 @@
 ADC1: 26-bit Oversampling + DMA
 ADC2: TIM TRGO (Update Event) + Double Buffer + DMA + FFT
 ADC3: TempSensor + DMA
+
+// ADC1: PC2,PC3
+// ADC2: PC5
+// ADC3: PC1,PC2,VRefint,ChipTemp
+
+!! 用了 malloc 分配大数组, 必须调大 HeapSize。
 ```
 
-## 
+### FFT
 
-## 
+使用 CMSIS_DSP 计算 信号幅值，相位，频率。
+
+* Magnitude
+* Phase
+* Frequency
 
 #### DMA
 

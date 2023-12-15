@@ -22,9 +22,7 @@ float32_t round_n(float32_t value, uint8_t n)
     return round(value * coeff) / coeff;
 }
 
-#define BUFSRC 0
-
-float32_t* BUFF[8000] = {0};
+#define BUFSRC 1
 
 bool FFT(float32_t* aInput, uint32_t N, uint32_t Fs_Hz)
 {
@@ -32,16 +30,10 @@ bool FFT(float32_t* aInput, uint32_t N, uint32_t Fs_Hz)
 
     uint32_t i;
 
-#if BUFSRC
     float32_t* aFFT   = (float32_t*)malloc(sizeof(float32_t) * N * 2);
     float32_t* aMag   = (float32_t*)malloc(sizeof(float32_t) * N);
     float32_t* aPhase = (float32_t*)malloc(sizeof(float32_t) * N);
-#else
-    float32_t* aFFT   = BUFF;
-    float32_t* aMag   = aFFT + N * 2;
-    float32_t* aPhase = aMag + N;
-#endif
-
+	
     if (aFFT == 0 || aMag == 0 || aPhase == 0)
     {
         goto exit;
@@ -143,8 +135,6 @@ bool FFT(float32_t* aInput, uint32_t N, uint32_t Fs_Hz)
      * 实际频率 = 数组下标 * 分辨率 = 采样频率 * 数组下标 / 采样点数
      */
 
-    printf("----------------------------------------\n");
-
     for (i = 0; i < (N / 2); i++)
     {
         if (aMag[i] > 0.1)
@@ -161,8 +151,6 @@ bool FFT(float32_t* aInput, uint32_t N, uint32_t Fs_Hz)
     //-------------------------------------------------------------------------
     // 显示所有结果
 
-    printf("----------------------------------------\n");
-
     for (i = 0; i < N; i++)
     {
         // 推荐使用 vofa+ 来查看输出结果
@@ -178,11 +166,9 @@ bool FFT(float32_t* aInput, uint32_t N, uint32_t Fs_Hz)
 
 exit:
 
-#if BUFSRC
     free(aFFT);
     free(aMag);
     free(aPhase);
-#endif
 
     return result;
 }
