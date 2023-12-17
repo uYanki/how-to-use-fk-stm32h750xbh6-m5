@@ -1,0 +1,21 @@
+{
+    "files.associations": {
+        "main.h": "c",
+        "app.h": "c",
+        "bsp_uart.h": "c",
+        "bsp_led.h": "c",
+        "bsp.h": "c",
+        "usart.h": "c",
+        "sleep.h": "c",
+        "gpio.h": "c",
+        "svpwm.h": "c",
+        "park.h": "c",
+        "motdrv_types.h": "c",
+        "ipark.h": "c",
+        "iclarke.h": "c",
+        "clarke.h": "c",
+        "stm32h7xx_hal.h": "c",
+        "hall.h": "c",
+        "motdrv.h": "c"
+    }
+}
