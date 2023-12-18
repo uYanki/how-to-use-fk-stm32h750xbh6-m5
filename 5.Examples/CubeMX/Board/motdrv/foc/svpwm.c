@@ -29,8 +29,13 @@ void ipark(foc_t* v)
  */
 void clarke(foc_t* v)
 {
+#if 0  // 2-phase
     v->alpha = v->phase_a;
     v->beta  = (v->phase_a + v->phase_b * 2) * M_INVSQRT3;
+#else  // 3-phase
+    v->alpha = v->phase_a;
+    v->beta  = (v->phase_b - v->phase_c) * M_INVSQRT3;
+#endif
 }
 
 /**
@@ -51,7 +56,7 @@ void iclarke(foc_t* v)
  * @param [in] alpha, beta
  * @param [out] Ta, Tb, Tc, sector
  */
-void svgen(foc_t* v)
+void svpwm(foc_t* v)
 {
     float32_t X = v->beta;
     float32_t Y = (v->beta + M_SQRT3 * v->alpha) * 0.5f;
@@ -99,7 +104,14 @@ void svgen(foc_t* v)
     }
 }
 
-void zero_inject() {}
+void zero_inject(foc_t* v)
+{
+    float32_t V0 = -0.5 * (v->phase_min + v->phase_max);
+
+    v->Ta = v->phase_a + V0;
+    v->Tb = v->phase_b + V0;
+    v->Tc = v->phase_c + V0;
+}
 
 void ph_order(foc_t* v)
 {

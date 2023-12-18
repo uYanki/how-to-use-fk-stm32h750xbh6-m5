@@ -16,6 +16,7 @@
         "clarke.h": "c",
         "stm32h7xx_hal.h": "c",
         "hall.h": "c",
-        "motdrv.h": "c"
+        "motdrv.h": "c",
+        "stdbool.h": "c"
     }
 }

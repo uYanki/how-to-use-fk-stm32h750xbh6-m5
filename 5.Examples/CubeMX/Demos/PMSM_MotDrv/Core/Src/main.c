@@ -129,15 +129,37 @@ LevelCheck_e LevelCheck(LevelCheck_t* p)
 #include "motdrv/foc/svpwm.h"
 #include "motdrv/enc/hall.h"
 
+void overmod(foc_t* v)
+{
+    // Modulation
+    float V_to_mod = 1.0f / ((2.0f / 3.0f) * v->Umdc);
+    float mod_d    = V_to_mod * v->d;
+    float mod_q    = V_to_mod * v->q;
+
+    // Vector modulation saturation, lock integrator if saturated
+    float mod_scalefactor = 0.80f * M_SQRT3 * 0.5f / sqrtf(mod_d * mod_d + mod_q * mod_q);
+    if (mod_scalefactor < 1.0f)
+    {
+        mod_d *= mod_scalefactor;
+        mod_q *= mod_scalefactor;
+    }
+
+    v->d = mod_d;
+    v->q = mod_q;
+}
+
 void svgen_teset(float32_t iq, float32_t MechAngle)
 {
+#define OM_SW 1
+#define SV_SW 0
+
     MotorInfo_t motor;
     foc_t       foc;
 
     motor.PolePairs = 4;
-    motor.Umdc      = 11.2;
-    motor.DutyMax   = htim1.Init.Period + 1;
-    motor.CarryFreq = 8000;
+    foc.Umdc = motor.Umdc = 11.2;
+    motor.DutyMax         = htim1.Init.Period + 1;
+    motor.CarryFreq       = 16000;
 
     foc.d = 0;
     foc.q = iq;
@@ -149,31 +171,61 @@ void svgen_teset(float32_t iq, float32_t MechAngle)
     foc.sin = sin(foc.theta);
     foc.cos = cos(foc.theta);
 
+#if OM_SW == 1
+    overmod(&foc);
+#endif
     ipark(&foc);
     iclarke(&foc);
+
+#if SV_SW == 0
+
     ph_order(&foc);
+    zero_inject(&foc);
 
-    float32_t V0 = -0.5 * (foc.phase_min + foc.phase_max);
+#elif SV_SW == 1
 
-    foc.Ta = (foc.phase_a + V0) / motor.Umdc;
-    foc.Tb = (foc.phase_b + V0) / motor.Umdc;
-    foc.Tc = (foc.phase_c + V0) / motor.Umdc;
+    svpwm(&foc);
 
-#if 1
-    foc.Ta *= -1;
-    foc.Tb *= -1;
-    foc.Tc *= -1;
+#elif SV_SW == 2
+
 #endif
 
-    foc.Ta += 0.5;
-    foc.Tb += 0.5;
-    foc.Tc += 0.5;
+#if OM_SW == 0
+    foc.Ta /= foc.Umdc;
+    foc.Tb /= foc.Umdc;
+    foc.Tc /= foc.Umdc;
+#endif
 
-    foc.Ta *= motor.DutyMax;
-    foc.Tb *= motor.DutyMax;
-    foc.Tc *= motor.DutyMax;
+    foc.Ta += 0.5;  // -0.5,0.5 => 0,1
+    foc.Tb += 0.5;  // -0.5,0.5 => 0,1
+    foc.Tc += 0.5;  // -0.5,0.5 => 0,1
 
-    PWM_SetDuty(foc.Ta, foc.Tb, foc.Tc);
+    uint16_t duty_a = foc.Ta * motor.DutyMax;
+    uint16_t duty_b = foc.Tb * motor.DutyMax;
+    uint16_t duty_c = foc.Tc * motor.DutyMax;
+
+    usb_printf("%d,%d,%d\n", duty_a, duty_b, duty_c);
+
+    PWM_SetDuty(duty_a, duty_b, duty_c);
+
+#undef OM_SW
+#undef SV_SW
+}
+
+__IO uint8_t  i = 0;  // 放函数内会被优化掉？？？
+__IO uint16_t spd_rps;
+int32_t       SpdCalc(uint16_t dt_ms)
+{
+    ++i;
+    if (i == 100)
+    {
+        uint16_t pulse = __HAL_TIM_GetCounter(&htim8);
+        spd_rps        = pulse / 4;
+        __HAL_TIM_SetCounter(&htim8, 0);
+        i = 0;
+    }
+
+    return spd_rps;
 }
 
 void openloop()
@@ -231,12 +283,13 @@ void openloop()
             usb_printf("stop\n");
             break;
         case LEVEL_CHECK_KEEP_LOW:
+            //  usb_printf("%d,%d,%d,%d,%d,%d,%d,%f,%d,%d\n", ADC1_Conv[0], ADC1_Conv[1], ADC1_Conv[2], ADC1_Conv[3], ADC2_Conv[0], ADC2_Conv[1], MechAngle * M_RAD2DGE, HallEnc_ReadSector() * 60, SpdCalc(10));
             break;
         case LEVEL_CHECK_KEEP_HIGH:
-            MechAngle += 0.03;
+            MechAngle += (float)(run_state.DataCur - run_state.Th) / (65535) / 2;
             if (MechAngle >= 6.28) { MechAngle = 0; }
             svgen_teset(3, MechAngle);
-            usb_printf("%d,%d,%d,%d,%d,%d,%d,%f,%d\n", ADC1_Conv[0], ADC1_Conv[1], ADC1_Conv[2], ADC1_Conv[3], ADC2_Conv[0], ADC2_Conv[1], MechAngle * M_RAD2DGE, HallEnc_ReadSector() * 60);
+            // usb_printf("%d,%d,%d,%d,%d,%d,%d,%f,%d,%d\n", ADC1_Conv[0], ADC1_Conv[1], ADC1_Conv[2], ADC1_Conv[3], ADC2_Conv[0], ADC2_Conv[1], MechAngle * M_RAD2DGE, HallEnc_ReadSector() * 60, SpdCalc(10));
             break;
     }
 
@@ -292,10 +345,13 @@ int main(void)
     MX_USB_DEVICE_Init();
     MX_TIM1_Init();
     MX_TIM6_Init();
+    MX_TIM8_Init();
     /* USER CODE BEGIN 2 */
     HAL_ADC_Start_DMA(&hadc1, (uint32_t*)&ADC1_Conv[0], ARRAY_SIZE(ADC1_Conv));
     HAL_ADC_Start_DMA(&hadc2, (uint32_t*)&ADC2_Conv[0], ARRAY_SIZE(ADC2_Conv));
 
+    // __HAL_TIM_SetCounter(&htim8, 0x7FFF);
+    HAL_TIM_Base_Start(&htim8);
     /* USER CODE END 2 */
 
     /* Infinite loop */
@@ -303,11 +359,12 @@ int main(void)
 
     while (1)
     {
-        HAL_Delay(10);
+        HAL_Delay(2);
         LED_TGL();
         SCB_InvalidateDCache_by_Addr((uint32_t*)&ADC1_Conv[0], ARRAY_SIZE(ADC1_Conv));
         SCB_InvalidateDCache_by_Addr((uint32_t*)&ADC2_Conv[0], ARRAY_SIZE(ADC2_Conv));
         openloop();
+
         /* USER CODE END WHILE */
 
         /* USER CODE BEGIN 3 */

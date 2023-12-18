@@ -2,6 +2,7 @@
 #define __MOTDRV_TYPES_H__
 
 #include "stm32h7xx_hal.h"
+#include "stdbool.h"
 
 typedef float float32_t;
 
@@ -21,15 +22,16 @@ typedef enum {
     MOTDRV_CTRLMODE_SVPWM,
 } MotDrv_CtrlMode_e;
 
-#define M_PI       3.1415926f  ///< π = 3.14159265358979323846
-#define M_PI_X2    6.2831852f  ///< 2π
-#define M_PI_X100  314         ///< 100π
-#define M_RAD2DGE  57.295779f  ///< 1 radians to 57.295780 degress
-#define M_DEG2RAD  0.017453f   ///< 1 degress to  0.017453 radians
-#define M_SQRT2    1.414213f   ///< sqrt(2)
-#define M_SQRT3    1.732050f   ///< sqrt(3)
-#define M_INVSQRT2 0.707106f   ///< 1/sqrt(2)
-#define M_INVSQRT3 0.577350f   ///< 1/sqrt(3)
+#define M_PI          3.1415926f  ///< π = 3.14159265358979323846
+#define M_PI_X2       6.2831852f  ///< 2π
+#define M_PI_X100     314         ///< 100π
+#define M_RAD2DGE     57.295779f  ///< 1 radians to 57.295780 degress
+#define M_DEG2RAD     0.017453f   ///< 1 degress to  0.017453 radians
+#define M_SQRT2       1.414213f   ///< sqrt(2)
+#define M_SQRT3       1.732050f   ///< sqrt(3)
+#define M_INVSQRT2    0.707106f   ///< 1/sqrt(2)
+#define M_INVSQRT3    0.577350f   ///< 1/sqrt(3)
+#define M_INVSQRT3_X2 1.154700f   ///< 2/sqrt(3)
 
 typedef struct {
     uint8_t   PolePairs;  // 极对数
@@ -76,6 +78,8 @@ typedef struct {
     float32_t Tb;  // phase-b switching function
     float32_t Tc;  // phase-c switching function
 
+    float32_t Umdc;
+
 } foc_t;
 
 // clang-format on
@@ -85,5 +89,7 @@ void ipark(foc_t* v);
 void clarke(foc_t* v);
 void iclarke(foc_t* v);
 void ph_order(foc_t* v);
+void svpwm(foc_t* v);
+void zero_inject(foc_t* v);
 
 #endif
