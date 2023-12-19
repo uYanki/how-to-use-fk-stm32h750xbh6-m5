@@ -1,23 +1,195 @@
 #include "hall.h"
 
-int8_t HallEnc_ReadSector(void)
+hall_encoder_t HallEnc = {
+    .HallState = 0,
+    .Direction = 0,
+    .Placement = 120,
+    .ElecAngle = 0,
+    .HA_Port   = ENC_HALL_A_GPIO_Port,
+    .HA_Pin    = ENC_HALL_A_Pin,
+    .HB_Port   = ENC_HALL_B_GPIO_Port,
+    .HB_Pin    = ENC_HALL_B_Pin,
+    .HC_Port   = ENC_HALL_C_GPIO_Port,
+    .HC_Pin    = ENC_HALL_C_Pin,
+};
+
+void HallEnc_ReadState(hall_encoder_t* pEnc)
 {
-    // 霍尔真值 => 转子实际角度所在范围(N级指向)
+    uint8_t HallStateCur = 0, HallStatePrev;
 
-    static const int8_t steps[] = {
-        [0b100] = 0,  // 330 ~ 30
-        [0b110] = 1,  // 30 ~ 90
-        [0b010] = 2,  // 90 ~ 150
-        [0b011] = 3,  // 150 ~ 210
-        [0b001] = 4,  // 210 ~ 270
-        [0b101] = 5,  // 270 ~ 330
-        [0b000] = -1,
-        [0b111] = -1,
-    };
+    do {
+        HallStatePrev = HallStateCur;
+        HallStateCur  = 0;
 
-    uint8_t state = (((uint8_t)(HAL_GPIO_ReadPin(ENC_HALL_A_GPIO_Port, ENC_HALL_A_Pin) == GPIO_PIN_RESET) << 2u) |
-                     ((uint8_t)(HAL_GPIO_ReadPin(ENC_HALL_B_GPIO_Port, ENC_HALL_B_Pin) == GPIO_PIN_RESET) << 1u) |
-                     ((uint8_t)(HAL_GPIO_ReadPin(ENC_HALL_C_GPIO_Port, ENC_HALL_C_Pin) == GPIO_PIN_RESET) << 0u));
+        switch (pEnc->Placement)
+        {
+            case 60:  // DEGREES_60
+            {
+                HallStateCur |= ((HAL_GPIO_ReadPin(pEnc->HB_Port, pEnc->HB_Pin) == GPIO_PIN_SET) ^ 1) << 2;
+                HallStateCur |= (HAL_GPIO_ReadPin(pEnc->HC_Port, pEnc->HC_Pin) == GPIO_PIN_SET) << 1;
+                HallStateCur |= (HAL_GPIO_ReadPin(pEnc->HA_Port, pEnc->HA_Pin) == GPIO_PIN_SET);
+                break;
+            }
+            case 120:  // DEGREES_120
+            {
+                HallStateCur |= (HAL_GPIO_ReadPin(pEnc->HC_Port, pEnc->HC_Pin) == GPIO_PIN_SET) << 2;
+                HallStateCur |= (HAL_GPIO_ReadPin(pEnc->HB_Port, pEnc->HB_Pin) == GPIO_PIN_SET) << 1;
+                HallStateCur |= (HAL_GPIO_ReadPin(pEnc->HA_Port, pEnc->HA_Pin) == GPIO_PIN_SET);
+                break;
+            }
+        }
 
-    return steps[state];
+    } while (HallStateCur != HallStatePrev);
+
+    pEnc->HallState = HallStateCur;
+}
+
+void HallEnc_Init(hall_encoder_t* pEnc)
+{
+    HallEnc_ReadState(pEnc);
+
+    switch (pEnc->HallState)
+    {
+        case HALL_STATE_2:
+            pEnc->ElecAngle = 270;
+            break;
+        case HALL_STATE_6:
+            pEnc->ElecAngle = 330;
+            break;
+        case HALL_STATE_4:
+            pEnc->ElecAngle = 30;
+            break;
+        case HALL_STATE_5:
+            pEnc->ElecAngle = 90;
+            break;
+        case HALL_STATE_1:
+            pEnc->ElecAngle = 150;
+            break;
+        case HALL_STATE_3:
+            pEnc->ElecAngle = 210;
+            break;
+        default:
+            break;
+    }
+
+   // pEnc->ElecAngle -= 30;
+}
+
+void HallEnc_Update(hall_encoder_t* pEnc)
+{
+    uint8_t HallStatePrev = pEnc->HallState;
+    uint8_t DirectionPrev = pEnc->Direction;
+
+    HallEnc_ReadState(pEnc);
+
+    switch (pEnc->HallState)  // 配速度
+    {
+        case HALL_STATE_2: {
+            switch (HallStatePrev)
+            {
+                case HALL_STATE_3: {
+                    pEnc->Direction = DIR_FWD;
+                    pEnc->ElecAngle = 240;
+                    break;
+                }
+                case HALL_STATE_6: {
+                    pEnc->Direction = DIR_BACK;
+                    pEnc->ElecAngle = 300;
+                    break;
+                }
+            }
+            break;
+        }
+        case HALL_STATE_6: {
+            switch (HallStatePrev)
+            {
+                case HALL_STATE_2: {
+                    pEnc->Direction = DIR_FWD;
+                    pEnc->ElecAngle = 300;
+                    break;
+                }
+                case HALL_STATE_4: {
+                    pEnc->Direction = DIR_BACK;
+                    pEnc->ElecAngle = 0;
+                    break;
+                }
+            }
+            break;
+        }
+        case HALL_STATE_4: {
+            switch (HallStatePrev)
+            {
+                case HALL_STATE_6: {
+                    pEnc->Direction = DIR_FWD;
+                    pEnc->ElecAngle = 0;
+                    break;
+                }
+                case HALL_STATE_5: {
+                    pEnc->Direction = DIR_BACK;
+                    pEnc->ElecAngle = 60;
+                    break;
+                }
+            }
+            break;
+        }
+        case HALL_STATE_5: {
+            switch (HallStatePrev)
+            {
+                case HALL_STATE_4: {
+                    pEnc->Direction = DIR_FWD;
+                    pEnc->ElecAngle = 60;
+                    break;
+                }
+                case HALL_STATE_1: {
+                    pEnc->Direction = DIR_BACK;
+                    pEnc->ElecAngle = 120;
+                    break;
+                }
+            }
+            break;
+        }
+        case HALL_STATE_1: {
+            switch (HallStatePrev)
+            {
+                case HALL_STATE_5: {
+                    pEnc->Direction = DIR_FWD;
+                    pEnc->ElecAngle = 120;
+                    break;
+                }
+                case HALL_STATE_3: {
+                    pEnc->Direction = DIR_BACK;
+                    pEnc->ElecAngle = 180;
+                    break;
+                }
+            }
+            break;
+        };
+        case HALL_STATE_3: {
+            switch (HallStatePrev)
+            {
+                case HALL_STATE_1: {
+                    pEnc->Direction = DIR_FWD;
+                    pEnc->ElecAngle = 180;
+                    break;
+                }
+                case HALL_STATE_2: {
+                    pEnc->Direction = DIR_BACK;
+                    pEnc->ElecAngle = 240;
+                    break;
+                }
+            }
+            break;
+        }
+        default: {
+            break;
+        }
+    }
+
+    if (pEnc->Direction != DirectionPrev)
+    {
+        /* Setting BufferFilled to 0 will prevent to compute the average speed based
+         on the SpeedPeriod buffer values */
+        // pEnc->BufferFilled = 0;
+        // pEnc->SpeedFIFOIdx = 0;
+    }
 }

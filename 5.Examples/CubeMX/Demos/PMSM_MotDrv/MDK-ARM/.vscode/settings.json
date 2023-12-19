@@ -17,6 +17,10 @@
         "stm32h7xx_hal.h": "c",
         "hall.h": "c",
         "motdrv.h": "c",
-        "stdbool.h": "c"
+        "stdbool.h": "c",
+        "abs.h": "c",
+        "inc.h": "c",
+        "mag.h": "c",
+        "rot.h": "c"
     }
 }

@@ -182,3 +182,13 @@ void ph_order(foc_t* v)
         }
     }
 }
+
+/**
+ *  Ia = Im * cos(θ)
+ *  Ib = Im * cos(θ-2π/3)
+ *  Ic = Im * cos(θ-4π/3)
+ *     = Im * cos(θ+2π/3)
+ *
+ *  Ia + Ib + Ic = 0 (基尔霍夫定律)
+ *
+ */

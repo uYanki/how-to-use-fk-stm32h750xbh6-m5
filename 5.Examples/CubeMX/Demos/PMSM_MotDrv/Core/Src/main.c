@@ -28,7 +28,7 @@
 /* USER CODE BEGIN Includes */
 #include "usbd_cdc_if.h"
 #include "bsp.h"
-
+#include "motdrv/enc/hall.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -161,10 +161,18 @@ void svgen_teset(float32_t iq, float32_t MechAngle)
     motor.DutyMax         = htim1.Init.Period + 1;
     motor.CarryFreq       = 16000;
 
-    foc.d = 0;
+    if (HallEnc.Speed_RPM > 500)
+    {
+        foc.d = -iq;  // 退磁
+    }
+    else
+    {
+        foc.d = 0;
+    }
     foc.q = iq;
 
-    foc.theta = MechAngle * motor.PolePairs;  // elecAngle
+    foc.theta = MechAngle * M_DEG2RAD;
+    // foc.theta *= motor.PolePairs;
 
     // 查表法要取余
 
@@ -204,28 +212,12 @@ void svgen_teset(float32_t iq, float32_t MechAngle)
     uint16_t duty_b = foc.Tb * motor.DutyMax;
     uint16_t duty_c = foc.Tc * motor.DutyMax;
 
-    usb_printf("%d,%d,%d\n", duty_a, duty_b, duty_c);
+    // usb_printf("%d,%d,%d\n", duty_a, duty_b, duty_c);
 
     PWM_SetDuty(duty_a, duty_b, duty_c);
 
 #undef OM_SW
 #undef SV_SW
-}
-
-__IO uint8_t  i = 0;  // 放函数内会被优化掉？？？
-__IO uint16_t spd_rps;
-int32_t       SpdCalc(uint16_t dt_ms)
-{
-    ++i;
-    if (i == 100)
-    {
-        uint16_t pulse = __HAL_TIM_GetCounter(&htim8);
-        spd_rps        = pulse / 4;
-        __HAL_TIM_SetCounter(&htim8, 0);
-        i = 0;
-    }
-
-    return spd_rps;
 }
 
 void openloop()
@@ -283,12 +275,19 @@ void openloop()
             usb_printf("stop\n");
             break;
         case LEVEL_CHECK_KEEP_LOW:
-            //  usb_printf("%d,%d,%d,%d,%d,%d,%d,%f,%d,%d\n", ADC1_Conv[0], ADC1_Conv[1], ADC1_Conv[2], ADC1_Conv[3], ADC2_Conv[0], ADC2_Conv[1], MechAngle * M_RAD2DGE, HallEnc_ReadSector() * 60, SpdCalc(10));
             break;
         case LEVEL_CHECK_KEEP_HIGH:
-            MechAngle += (float)(run_state.DataCur - run_state.Th) / (65535) / 2;
-            if (MechAngle >= 6.28) { MechAngle = 0; }
-            svgen_teset(3, MechAngle);
+            HallEnc_Update(&HallEnc);
+#if 0
+            MechAngle += (float)(run_state.DataCur - run_state.Th) / (65535);
+            if (MechAngle >= 360) { MechAngle = 0; }
+            svgen_teset(2, MechAngle * 4);  // polepairs=4
+#else
+            HallEnc_Init(&HallEnc);
+            uint8_t Iq = (float)(run_state.DataCur - run_state.Th) / (65535) * 6;
+            svgen_teset(Iq, HallEnc.ElecAngle + 90);
+#endif
+            usb_printf("%f,%f,%d\n", HallEnc.Speed_RPM, MechAngle, HallEnc.ElecAngle);
             // usb_printf("%d,%d,%d,%d,%d,%d,%d,%f,%d,%d\n", ADC1_Conv[0], ADC1_Conv[1], ADC1_Conv[2], ADC1_Conv[3], ADC2_Conv[0], ADC2_Conv[1], MechAngle * M_RAD2DGE, HallEnc_ReadSector() * 60, SpdCalc(10));
             break;
     }
@@ -350,8 +349,8 @@ int main(void)
     HAL_ADC_Start_DMA(&hadc1, (uint32_t*)&ADC1_Conv[0], ARRAY_SIZE(ADC1_Conv));
     HAL_ADC_Start_DMA(&hadc2, (uint32_t*)&ADC2_Conv[0], ARRAY_SIZE(ADC2_Conv));
 
-    // __HAL_TIM_SetCounter(&htim8, 0x7FFF);
     HAL_TIM_Base_Start(&htim8);
+    HallEnc_Init(&HallEnc);
     /* USER CODE END 2 */
 
     /* Infinite loop */
@@ -359,11 +358,35 @@ int main(void)
 
     while (1)
     {
-        HAL_Delay(2);
-        LED_TGL();
-        SCB_InvalidateDCache_by_Addr((uint32_t*)&ADC1_Conv[0], ARRAY_SIZE(ADC1_Conv));
-        SCB_InvalidateDCache_by_Addr((uint32_t*)&ADC2_Conv[0], ARRAY_SIZE(ADC2_Conv));
-        openloop();
+        static uint32_t tBlink = 0;
+
+        if (DelayNonBlockMS(tBlink, 500))
+        {
+            LED_TGL();
+            tBlink = DelayNonGetTick();
+        }
+
+        static uint32_t tSpdCalc = 0;
+
+        if (DelayNonBlockMS(tSpdCalc, 1000))
+        {
+            tSpdCalc = DelayNonGetTick();
+
+            uint16_t pulse = __HAL_TIM_GetCounter(&htim8);
+            __HAL_TIM_SetCounter(&htim8, 0);
+            HallEnc.Speed_RPM = (pulse / 4.f) * 60;
+        }
+
+        static uint32_t tMotorTask = 0;
+
+        if (DelayNonBlockMS(tMotorTask, 2))
+        {
+            SCB_InvalidateDCache_by_Addr((uint32_t*)&ADC1_Conv[0], ARRAY_SIZE(ADC1_Conv));
+            SCB_InvalidateDCache_by_Addr((uint32_t*)&ADC2_Conv[0], ARRAY_SIZE(ADC2_Conv));
+            openloop();
+
+            tMotorTask = DelayNonGetTick();
+        }
 
         /* USER CODE END WHILE */
 
