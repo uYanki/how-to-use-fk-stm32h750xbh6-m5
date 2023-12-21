@@ -19,7 +19,19 @@ extern "C" {
 #error "not supported tool chain..."
 #endif
 
-#define shell_printf printf
+#define FONT_COLO_WHITE         "\e[0m"
+#define FONT_COLO_RED           "\e[31m"
+#define FONT_COLO_GREEN         "\e[32m"
+#define FONT_COLO_YELLOW        "\e[33m"
+#define FONT_COLO_BLUE          "\e[34m"
+#define FONT_COLO_PURPLE        "\e[35m"
+#define FONT_COLO_LIGHTBLUE     "\e[36m"
+
+#define shell_printf            printf
+#define shell_error(fmt, ...)   shell_printf(FONT_COLO_RED fmt FONT_COLO_WHITE, ##__VA_ARGS__)
+#define shell_success(fmt, ...) shell_printf(FONT_COLO_GREEN fmt FONT_COLO_WHITE, ##__VA_ARGS__)
+#define shell_info(fmt, ...)    shell_printf(FONT_COLO_LIGHTBLUE fmt FONT_COLO_WHITE, ##__VA_ARGS__)
+#define shell_warning(fmt, ...) shell_printf(FONT_COLO_YELLOW fmt FONT_COLO_WHITE, ##__VA_ARGS__)
 
 typedef int (*cmd_cbk_t)(int argc, char** argv);
 

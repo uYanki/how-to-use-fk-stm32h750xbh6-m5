@@ -1,103 +1,333 @@
-
 #include "string.h"
 
-size_t strlen(const char* str)
+#include <string.h>
+#include <ctype.h>
+#include <errno.h>   //for returning error codes to compare with test_strtol
+#include <limits.h>  //for INT32_MAX & INT32_MIN
+#include <stdbool.h>
+
+size_t _strlen(const char* str)
 {
-    size_t len = 0;
-    while (str[len])
-    {
-        len++;
-    }
-    return len;
+    const char* p = str;
+
+    for (; *p; ++p)
+        ;
+
+    return p - str;
 }
 
-int strcmp(const char* str1, const char* str2)
+int _strcmp(const char* str1, const char* str2)
 {
     while (*str1 && (*str1 == *str2))
     {
         str1++;
         str2++;
     }
+
     return *str1 - *str2;
 }
 
-char* strcpy(char* str1, const char* str2)
+char* _strcpy(char* str1, const char* str2)
 {
-    while (*str2)
-    {
-        *(str1++) = *(str2++);
-    }
-    *str1 = '\0';
-    return 0;
-}
+    char* p = str1;
 
-void* memcpy(void* dest, const void* src, size_t size)
-{
-    size_t i;
-    char*  src_char  = (char*)src;
-    char*  dest_char = (char*)dest;
-    for (i = 0; i < size; i++)
+    while ((*str1 = *str2))
     {
-        dest_char[i] = src_char[i];
-    }
-    return 0;
-}
-
-void* memset(void* dest, int val, size_t size)
-{
-    size_t i;
-    char*  dest_char = (char*)dest;
-    for (i = 0; i < size; i++)
-    {
-        dest_char[i] = val;
+        str1++;
+        str2++;
     }
 
-    return 0;
+    return p;
 }
 
-int atoi(const char* str)
+int32_t _strtol(const char* nPtr, char** endPtr, int base)
 {
-    int res = 0;
-    for (int i = 0; str[i] != '\0'; ++i)
+    // checking if the base value is correct
+    if ((base < 2 || base > 36) && base != 0)
     {
-        res = res * 10 + str[i] - '0';
+        errno = EINVAL;
+        return 0;
     }
-    return res;
-}
 
-uint32_t atoh(const char* str)
-{
-    uint32_t hex   = 0;
-    uint32_t value = 0;
+    const char* divider;
 
-    for (uint32_t i = 0; str[i] != '\0'; i++)
+    int32_t number = 0;
+    int     currentdigit, sign, cutlim;
+
+    enum sign {
+        NEGATIVE,
+        POSITIVE,
+    };
+
+    uint32_t cutoff;
+
+    bool correctconversion = true;
+
+    divider = nPtr;
+
+    // looking for a space if the beggining of the string is moved further
+    while (isspace(*divider))
     {
-        if (str[i] >= '0' && str[i] <= '9')
+        divider++;
+    }
+
+    // detecting the sign, positive by default
+    if (*divider == '+')
+    {
+        sign = POSITIVE;
+        divider++;
+    }
+    else if (*divider == '-')
+    {
+        sign = NEGATIVE;
+        divider++;
+    }
+    else
+    {
+        sign = POSITIVE;
+    }
+
+    if (*divider == NULL)
+    {
+        *endPtr = (char*)divider;
+        return 0;
+    }
+
+    if (*divider < '0' || (*divider > '9' && *divider < 'A') || (*divider > 'z'))
+    {
+        return 0;
+    }
+
+    if ((base == 8) && (*divider == '0'))
+    {
+        divider++;
+
+        if (*divider == 'o' || *divider == 'O')  // if the input includes 'o', it's skipped
         {
-            value = str[i] - '0';
+            divider++;
         }
-        else if (str[i] >= 'a' && str[i] <= 'f')
+    }
+    else if ((base == 16))
+    {
+        if (*divider == '0')
         {
-            value = str[i] - 'a' + 10;
+            divider++;
+
+            if (*divider == 'x' || *divider == 'X')
+            {
+                divider++;
+
+                if (*divider > 'f' || *divider > 'F')
+                {
+                    divider--;
+                    *endPtr = (char*)divider;
+
+                    return 0;
+                }
+            }
+            else
+            {
+                divider--;
+            }
         }
-        else if (str[i] >= 'A' && str[i] <= 'F')
+        // basically the system-detecting algorithm
+    }
+    else if (base == 0)
+    {
+        if (*divider == '0')
         {
-            value = str[i] - 'A' + 10;
+            divider++;
+
+            if (*divider == 'o' || *divider == 'O')  // oct
+            {
+                base = 8;
+                divider++;
+
+                if (*divider > '7')
+                {
+                    divider--;
+                    *endPtr = (char*)divider;
+
+                    return 0;
+                }
+            }
+            else if (*divider == 'x' || *divider == 'X')  // hex
+            {
+                base = 16;
+                divider++;
+
+                if (*divider > 'f' || *divider > 'F')
+                {
+                    divider--;
+                    *endPtr = (char*)divider;
+
+                    return 0;
+                }
+            }
+            else if (*divider <= '7')  // oct
+            {
+                base = 8;
+            }
+            else
+            {
+                *endPtr = (char*)divider;
+                return 0;
+            }
+        }
+        else if (*divider >= '1' && *divider <= '9')  // dec
+        {
+            base = 10;
+        }
+    }
+
+    // two conditions just for clarity --> |INT32_MIN| = INT32_MAX + 1
+    cutoff = (sign ? INT32_MAX : (uint32_t)INT32_MIN) / (uint32_t)base;
+    cutlim = cutoff % (uint32_t)base;
+
+    // looping until the end of the input string
+    // searching for convertable characters
+    while (*divider != NULL)
+    {
+        if (isdigit(*divider))
+        {
+            currentdigit = *divider - '0';  // converting to the actual integer
         }
         else
         {
-            continue;
+            if (isalpha(*divider))
+            {
+                if (islower(*divider) && (*divider - 'a') + 10 < base)
+                {
+                    currentdigit = (*divider - 'a') + 10;
+                }
+                else if (!islower(*divider) && (*divider - 'A') + 10 < base)
+                {
+                    currentdigit = (*divider - 'A') + 10;
+                }
+                else
+                {
+                    break;
+                }
+            }
+            else
+            {
+                break;
+            }
         }
+        if (!correctconversion ||
+            number > cutoff ||
+            (number == cutoff && (int)currentdigit > cutlim))
+        {
+            correctconversion = false;
+            divider++;
+        }
+        else
+        {  // the actual conversion to decimal
+            correctconversion = true;
+            number            = (number * base) + currentdigit;
+            divider++;
+        }
+    }
+
+    if (!correctconversion)
+    {
+        number = sign ? INT32_MAX : INT32_MIN;
+        errno  = ERANGE;
+    }
+
+    if (sign == NEGATIVE)
+    {
+        number *= -1;
+    }
+
+    if (endPtr != NULL)
+    {
+        if (isspace(*divider))  // checking if the number is separated
+        {
+            divider++;  // from the rest of the string
+        }
+        *endPtr = (char*)divider;
+    }
+
+    return number;
+}
+
+void* _memcpy(void* dest, const void* src, size_t size)
+{
+    char* p = (char*)src;
+
+    char* p_src  = (char*)src;
+    char* p_dest = (char*)dest;
+
+    while (size--)
+    {
+        *p_dest++ = *p_src++;
+    }
+
+    return p;
+}
+
+void* _memset(void* dest, int val, size_t size)
+{
+    char* p = (char*)dest;
+
+    while (size--)
+    {
+        *p++ = val;
+    }
+
+    return dest;
+}
+
+int _atoi(const char* str)
+{
+    int res = 0;
+
+    while (*str)
+    {
+        res *= 10;
+        res += *str - '0';
+        ++str;
+    }
+
+    return res;
+}
+
+uint32_t _atoh(const char* str)
+{
+    uint32_t hex = 0;
+    uint32_t val = 0;
+
+    while (*str)
+    {
+        if (*str >= '0' && *str <= '9')
+        {
+            val = *str - '0';
+        }
+        else if (*str >= 'a' && *str <= 'f')
+        {
+            val = *str - 'a' + 10;
+        }
+        else if (*str >= 'A' && *str <= 'F')
+        {
+            val = *str - 'A' + 10;
+        }
+        else
+        {
+            break;
+        }
+
+        ++str;
 
         // make space for the new nibble on the right
         hex = hex << 4;
-        hex |= value;
+        hex |= val;
     }
 
     return hex;
 }
 
-int lower(int c)
+int _lower(int c)
 {
     if ((c >= 'A') && (c <= 'Z'))
     {

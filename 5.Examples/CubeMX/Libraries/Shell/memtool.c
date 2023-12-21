@@ -1,5 +1,6 @@
 
 #include "shell.h"
+#include "string.h"
 
 /*
  * Memory manipulation utilities.
@@ -16,7 +17,7 @@ int r32(int argc, char* argv[])
         return -1;
     }
 
-    uint32_t addr = atoh(argv[1]);
+    uint32_t addr = _atoh(argv[1]);
     uint32_t data;
 
     data = REG32(addr);
@@ -32,8 +33,8 @@ int w32(int argc, char* argv[])
         shell_printf("Usage: %s <address> (in hex) <value> (in hex)\n", argv[0]);
         return -1;
     }
-    uint32_t addr = atoh(argv[1]);
-    uint32_t data = atoh(argv[2]);
+    uint32_t addr = _atoh(argv[1]);
+    uint32_t data = _atoh(argv[2]);
     REG32(addr)   = data;
 
     return 0;
@@ -47,8 +48,8 @@ int read_mem(int argc, char* argv[])
         return -1;
     }
 
-    uint32_t addr   = atoh(argv[1]);
-    uint32_t length = atoi(argv[2]);
+    uint32_t addr   = _atoh(argv[1]);
+    uint32_t length = _atoi(argv[2]);
 
     for (uint32_t i = 0, data = 0; i < length; i++)
     {
@@ -70,9 +71,9 @@ int w32_bit(int argc, char* argv[])
         goto usage;
     }
 
-    uint32_t addr    = atoh(argv[1]);
-    uint32_t bit_loc = atoi(argv[2]);
-    uint32_t bit_val = atoi(argv[3]);
+    uint32_t addr    = _atoh(argv[1]);
+    uint32_t bit_loc = _atoi(argv[2]);
+    uint32_t bit_val = _atoi(argv[3]);
 
     if (bit_loc > 31)
     {
@@ -104,8 +105,8 @@ int r32_bit(int argc, char* argv[])
         goto usage;
     }
 
-    uint32_t addr    = atoh(argv[1]);
-    uint32_t bit_loc = atoi(argv[2]);
+    uint32_t addr    = _atoh(argv[1]);
+    uint32_t bit_loc = _atoi(argv[2]);
 
     if (bit_loc > 31)
     {

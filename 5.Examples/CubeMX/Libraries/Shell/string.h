@@ -1,4 +1,4 @@
- 
+
 #ifndef __STRING_H__
 #define __STRING_H__
 
@@ -14,7 +14,7 @@ extern "C" {
  *
  * @param str - string
  */
-size_t strlen(const char* str);
+size_t _strlen(const char* str);
 
 /**
  * @brief Compares two strings
@@ -22,7 +22,7 @@ size_t strlen(const char* str);
  * @param str1 - first string
  * @param str2 - second string
  */
-int strcmp(const char* str1, const char* str2);
+int _strcmp(const char* str1, const char* str2);
 
 /**
  * @brief Copies second string to first string
@@ -30,7 +30,7 @@ int strcmp(const char* str1, const char* str2);
  * @param str1 - first string
  * @param str2 - second string
  */
-char* strcpy(char* str1, const char* str2);
+char* _strcpy(char* str1, const char* str2);
 
 /**
  * @brief Copies second buffer to the first buffer
@@ -39,7 +39,7 @@ char* strcpy(char* str1, const char* str2);
  * @param src - pointer to the source buffer
  * @param size - number of bytes to be copied
  */
-void* memcpy(void* dest, const void* src, size_t size);
+void* _memcpy(void* dest, const void* src, size_t size);
 
 /**
  * @brief Sets memory buffer to the given value
@@ -48,26 +48,28 @@ void* memcpy(void* dest, const void* src, size_t size);
  * @param val - Value to set. Only the first byte is considered.
  * @param size - number of bytes to set
  */
-void* memset(void* dest, int val, size_t size);
+void* _memset(void* dest, int val, size_t size);
 
 /**
  * @brief Converts provided string to integer
  *
  * @param str string
  */
-int atoi(const char* str);
+int _atoi(const char* str);
 
 /**
  * @brief Converts provided string to hex
  *
  * @param str string
  */
-uint32_t atoh(const char* str);
+uint32_t _atoh(const char* str);
 
 /**
  * @brief Convert to lowercase letters
  */
-int lower(int c);
+int _lower(int c);
+
+int32_t _strtol(const char* nPtr, char** endPtr, int base);
 
 #ifdef __cplusplus
 }

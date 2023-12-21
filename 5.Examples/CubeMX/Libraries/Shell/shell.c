@@ -3,7 +3,7 @@
 
 #include <stdbool.h>
 
-#include "shell_config.h"
+#include "shell_conf.h"
 #include "string.h"
 
 static cmd_t* cmds_begin;
@@ -29,18 +29,18 @@ static void handle_up_arrow(char* buff, int* size)
         return;
     }
 
-    memset(buff, 0, LINE_BUFSIZE);
+    _memset(buff, 0, LINE_BUFSIZE);
 
     int index = (--his_cmd_cur % NUM_HISTORY_ENTRIES);
-    memcpy(buff, &history[index], LINE_BUFSIZE);
-    *size = strlen(buff);
+    _memcpy(buff, &history[index], LINE_BUFSIZE);
+    *size = _strlen(buff);
 
     shell_printf("%s", buff);
 }
 
 static void handle_down_arrow(char* buff, int* size)
 {
-    memset(buff, 0, LINE_BUFSIZE);
+    _memset(buff, 0, LINE_BUFSIZE);
 
     *size = 0;
 
@@ -50,8 +50,8 @@ static void handle_down_arrow(char* buff, int* size)
     }
 
     int index = (++his_cmd_cur % NUM_HISTORY_ENTRIES);
-    memcpy(buff, &history[index], LINE_BUFSIZE);
-    *size = strlen(buff);
+    _memcpy(buff, &history[index], LINE_BUFSIZE);
+    *size = _strlen(buff);
 
     shell_printf("%s", buff);
 }
@@ -59,13 +59,13 @@ static void handle_down_arrow(char* buff, int* size)
 static void add_history(const char* cmd)
 {
     // add only if command is not empty
-    if (cmd == NULL || strcmp(cmd, "") == 0)
+    if (cmd == NULL || *cmd == '\0')
     {
         return;
     }
 
     int index = his_cmds_cnt % NUM_HISTORY_ENTRIES;
-    memcpy(&history[index], cmd, LINE_BUFSIZE);
+    _memcpy(&history[index], cmd, LINE_BUFSIZE);
     his_cmds_cnt++;
     his_cmd_cur = his_cmds_cnt;
 }
@@ -82,9 +82,9 @@ static int show_history(int argc, char** argv)
 
     shell_printf("\n");
 
-    for (uint32_t index = begin; index <= end; ++index)
+    for (uint32_t index = begin, i = 0; index <= end; ++index, ++i)
     {
-        shell_printf("%2d. %s\n", index, history[index % NUM_HISTORY_ENTRIES]);
+        shell_printf("%2d. %s\n", i, history[index % NUM_HISTORY_ENTRIES]);
     }
 
     shell_printf("\n");
@@ -102,7 +102,7 @@ CMD_EXPORT(history, "Show command history", show_history);
 
 static int prefix_match(char* sub, int len, const char* str)
 {
-    if (sub == NULL || str == NULL || len <= 0 || len > strlen(str))
+    if (sub == NULL || str == NULL || len <= 0 || len > _strlen(str))
     {
         return false;
     }
@@ -145,8 +145,8 @@ static void handle_tab(char* buff, int* size)
     // if only one match, then that's the command to be executed
     if (match_count == 1)
     {
-        memcpy(buff, last_match->name, LINE_BUFSIZE);
-        *size = strlen(buff);
+        _memcpy(buff, last_match->name, LINE_BUFSIZE);
+        *size = _strlen(buff);
     }
 
     // print current line with old/updated command
@@ -154,7 +154,7 @@ static void handle_tab(char* buff, int* size)
     {
         shell_printf("\n");
         shell_printf(PROMPT);
-        shell_printf(buff);
+        shell_printf("%s", buff);
     }
 }
 
@@ -187,8 +187,8 @@ static int cmd_match(const char* str, const char* cmd)
     int c1, c2;
 
     do {
-        c1 = lower(*str++);
-        c2 = lower(*cmd++);
+        c1 = _lower(*str++);
+        c2 = _lower(*cmd++);
     } while ((c1 == c2) && c1);
 
     return c1 - c2;
@@ -197,12 +197,12 @@ static int cmd_match(const char* str, const char* cmd)
 static uint32_t cmd_hash(const char* str)
 {
     int      tmp, c = *str;
-    uint32_t seed = CMD_HASH; /* 'jiejie' string hash */
+    uint32_t seed = CMD_HASH;
     uint32_t hash = 0;
 
     while (*str)
     {
-        tmp  = lower(c);
+        tmp  = _lower(c);
         hash = (hash ^ seed) + tmp;
         str++;
         c = *str;
@@ -357,7 +357,7 @@ static int shell_parse(char** argv, char* buff, int argument_size)
 {
     int argc   = 0;
     int pos    = 0;
-    int length = strlen(buff);
+    int length = _strlen(buff);
 
     while (pos <= length)
     {
@@ -438,7 +438,7 @@ static int help(int argc, char** argv)
 
     shell_printf("\n");
 
-    if (argc > 1 && (strcmp(argv[1], "-l") == 0))
+    if (argc > 1 && (_strcmp(argv[1], "-l") == 0))
     {
         verbose = false;
     }
@@ -449,12 +449,11 @@ static int help(int argc, char** argv)
 
     for (cmd_t* cmd = cmds_begin; cmd < cmds_end; cmd++)
     {
-        shell_printf(cmd->name);
+        shell_printf("%s",cmd->name);
 
         if (verbose)
         {
-            shell_printf("\n\t");
-            shell_printf(cmd->desc);
+            shell_printf("\n\t%s",cmd->desc);
         }
 
         shell_printf("\n");

@@ -10,6 +10,12 @@
         "gpio.h": "c",
         "shell.h": "c",
         "string.h": "c",
-        "shell_config.h": "c"
+        "shell_config.h": "c",
+        "stm32h7xx_hal.h": "c",
+        "i2c.h": "c",
+        "initializer_list": "c",
+        "shell_conf.h": "c",
+        "cstring": "c",
+        "locale": "c"
     }
 }

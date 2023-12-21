@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "i2c.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -87,16 +88,16 @@ int blink(int argc, char** argv)
 {
     if (argc != 2)
     {
-        shell_printf("Usage:\n"
-                     "%s <state>\n"
-                     "- 0: off\n"
-                     "- 1: on\n"
-                     "- 2: toggle\n",
-                     argv[0]);
+        shell_info("Usage: %s STATE\n"
+                   " STATE is one of "
+                   " - 0: off\n"
+                   " - 1: on\n"
+                   " - 2: toggle\n",
+                   argv[0]);
         return -1;
     }
 
-    uint8_t state = atoi(argv[1]);
+    uint8_t state = _atoi(argv[1]);
 
     switch (state)
     {
@@ -154,6 +155,7 @@ int main(void)
     /* Initialize all configured peripherals */
     MX_GPIO_Init();
     MX_USART1_UART_Init();
+    MX_I2C1_Init();
     /* USER CODE BEGIN 2 */
     shell_init();
     /* USER CODE END 2 */
@@ -185,6 +187,11 @@ void SystemClock_Config(void)
 
     /** Configure the main internal regulator output voltage
      */
+    __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
+
+    while (!__HAL_PWR_GET_FLAG(PWR_FLAG_VOSRDY)) {}
+
+    __HAL_RCC_SYSCFG_CLK_ENABLE();
     __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE0);
 
     while (!__HAL_PWR_GET_FLAG(PWR_FLAG_VOSRDY)) {}
