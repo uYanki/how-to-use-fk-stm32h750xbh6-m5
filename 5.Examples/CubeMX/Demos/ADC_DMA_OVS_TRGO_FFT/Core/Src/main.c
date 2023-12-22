@@ -40,8 +40,6 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 
-#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof(*arr))
-
 #if defined(__CC_ARM)  // AC5
 #define __AT_ADDR(addr) __attribute__((at(addr)))
 #elif defined(__GNUC__)  // AC6

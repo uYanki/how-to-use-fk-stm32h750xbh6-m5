@@ -32,3 +32,9 @@ fromelf --bin -o "$L@L.bin" "#L"
 ```
 
 ![bingen](.assest/README/bingen.png)
+
+## dchace
+
+`SCB_CleanInvalidateDCache()`：DMA发送前清除操作，是将Cache里面的数据写入到实际的RAM空间，保证DMA传输的是最新数据。
+
+`SCB_InvalidateDCache()`：DMA发送后做无效化操作，保证的是从Cache里面读取的是最新数据。

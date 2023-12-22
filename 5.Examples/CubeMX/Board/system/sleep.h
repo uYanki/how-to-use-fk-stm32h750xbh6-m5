@@ -11,8 +11,7 @@
 
 //
 
-#define BV(n)               (1ul << (n))
-
+#include "defs.h"
 #include <stdbool.h>
 #include "stm32h7xx_hal.h"
 
