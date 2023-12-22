@@ -43,7 +43,7 @@ typedef enum {
 typedef eMBException (*pxMBFunctionHandler)(uint8_t* pucFrame, uint16_t* pusLength);
 
 typedef struct {
-    uint8_t               ucFunctionCode;
+    uint8_t             ucFunctionCode;
     pxMBFunctionHandler pxHandler;
 } xMBFunctionHandler;
 

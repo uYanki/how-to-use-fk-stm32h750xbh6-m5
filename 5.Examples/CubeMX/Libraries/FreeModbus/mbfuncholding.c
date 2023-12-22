@@ -5,7 +5,6 @@
 
 /* ----------------------- Platform includes --------------------------------*/
 
-
 /* ----------------------- Modbus includes ----------------------------------*/
 #include "mb.h"
 #include "mbframe.h"
@@ -52,8 +51,8 @@ eMBException eMBFuncWriteHoldingRegister(uint8_t* pucFrame, uint16_t* usLen)
 
     if (*usLen == (MB_PDU_FUNC_WRITE_SIZE + MB_PDU_SIZE_MIN))
     {
-        usRegAddress = (uint16_t) (pucFrame[MB_PDU_FUNC_WRITE_ADDR_OFF] << 8);
-        usRegAddress |= (uint16_t) (pucFrame[MB_PDU_FUNC_WRITE_ADDR_OFF + 1]);
+        usRegAddress = (uint16_t)(pucFrame[MB_PDU_FUNC_WRITE_ADDR_OFF] << 8);
+        usRegAddress |= (uint16_t)(pucFrame[MB_PDU_FUNC_WRITE_ADDR_OFF + 1]);
         usRegAddress++;
 
         /* Make callback to update the value. */
@@ -86,16 +85,16 @@ eMBException eMBFuncWriteMultipleHoldingRegister(uint8_t* pucFrame, uint16_t* us
 
     if (*usLen >= (MB_PDU_FUNC_WRITE_MUL_SIZE_MIN + MB_PDU_SIZE_MIN))
     {
-        usRegAddress = (uint16_t) (pucFrame[MB_PDU_FUNC_WRITE_MUL_ADDR_OFF] << 8);
-        usRegAddress |= (uint16_t) (pucFrame[MB_PDU_FUNC_WRITE_MUL_ADDR_OFF + 1]);
+        usRegAddress = (uint16_t)(pucFrame[MB_PDU_FUNC_WRITE_MUL_ADDR_OFF] << 8);
+        usRegAddress |= (uint16_t)(pucFrame[MB_PDU_FUNC_WRITE_MUL_ADDR_OFF + 1]);
         usRegAddress++;
 
-        usRegCount = (uint16_t) (pucFrame[MB_PDU_FUNC_WRITE_MUL_REGCNT_OFF] << 8);
-        usRegCount |= (uint16_t) (pucFrame[MB_PDU_FUNC_WRITE_MUL_REGCNT_OFF + 1]);
+        usRegCount = (uint16_t)(pucFrame[MB_PDU_FUNC_WRITE_MUL_REGCNT_OFF] << 8);
+        usRegCount |= (uint16_t)(pucFrame[MB_PDU_FUNC_WRITE_MUL_REGCNT_OFF + 1]);
 
         ucRegByteCount = pucFrame[MB_PDU_FUNC_WRITE_MUL_BYTECNT_OFF];
 
-        if ((usRegCount >= 1) && (usRegCount <= MB_PDU_FUNC_WRITE_MUL_REGCNT_MAX) && (ucRegByteCount == (uint8_t) (2 * usRegCount)))
+        if ((usRegCount >= 1) && (usRegCount <= MB_PDU_FUNC_WRITE_MUL_REGCNT_MAX) && (ucRegByteCount == (uint8_t)(2 * usRegCount)))
         {
             /* Make callback to update the register values. */
             eRegStatus = eMBRegHoldingCB(&pucFrame[MB_PDU_FUNC_WRITE_MUL_VALUES_OFF], usRegAddress, usRegCount, MB_REG_WRITE);
@@ -141,15 +140,15 @@ eMBException eMBFuncReadHoldingRegister(uint8_t* pucFrame, uint16_t* usLen)
 
     if (*usLen == (MB_PDU_FUNC_READ_SIZE + MB_PDU_SIZE_MIN))
     {
-        usRegAddress = (uint16_t) (pucFrame[MB_PDU_FUNC_READ_ADDR_OFF] << 8);
-        usRegAddress |= (uint16_t) (pucFrame[MB_PDU_FUNC_READ_ADDR_OFF + 1]);
+        usRegAddress = (uint16_t)(pucFrame[MB_PDU_FUNC_READ_ADDR_OFF] << 8);
+        usRegAddress |= (uint16_t)(pucFrame[MB_PDU_FUNC_READ_ADDR_OFF + 1]);
         usRegAddress++;
 
-        usRegCount = (uint16_t) (pucFrame[MB_PDU_FUNC_READ_REGCNT_OFF] << 8);
-        usRegCount = (uint16_t) (pucFrame[MB_PDU_FUNC_READ_REGCNT_OFF + 1]);
+        usRegCount = (uint16_t)(pucFrame[MB_PDU_FUNC_READ_REGCNT_OFF] << 8);
+        usRegCount = (uint16_t)(pucFrame[MB_PDU_FUNC_READ_REGCNT_OFF + 1]);
 
         /* Check if the number of registers to read is valid. If not
-         * return Modbus illegal data value exception. 
+         * return Modbus illegal data value exception.
          */
         if ((usRegCount >= 1) && (usRegCount <= MB_PDU_FUNC_READ_REGCNT_MAX))
         {
@@ -162,7 +161,7 @@ eMBException eMBFuncReadHoldingRegister(uint8_t* pucFrame, uint16_t* usLen)
             *usLen += 1;
 
             /* Second byte in the response contain the number of bytes. */
-            *pucFrameCur++ = (uint8_t) (usRegCount * 2);
+            *pucFrameCur++ = (uint8_t)(usRegCount * 2);
             *usLen += 1;
 
             /* Make callback to fill the buffer. */
@@ -208,19 +207,19 @@ eMBException eMBFuncReadWriteMultipleHoldingRegister(uint8_t* pucFrame, uint16_t
 
     if (*usLen >= (MB_PDU_FUNC_READWRITE_SIZE_MIN + MB_PDU_SIZE_MIN))
     {
-        usRegReadAddress = (uint16_t) (pucFrame[MB_PDU_FUNC_READWRITE_READ_ADDR_OFF] << 8U);
-        usRegReadAddress |= (uint16_t) (pucFrame[MB_PDU_FUNC_READWRITE_READ_ADDR_OFF + 1]);
+        usRegReadAddress = (uint16_t)(pucFrame[MB_PDU_FUNC_READWRITE_READ_ADDR_OFF] << 8U);
+        usRegReadAddress |= (uint16_t)(pucFrame[MB_PDU_FUNC_READWRITE_READ_ADDR_OFF + 1]);
         usRegReadAddress++;
 
-        usRegReadCount = (uint16_t) (pucFrame[MB_PDU_FUNC_READWRITE_READ_REGCNT_OFF] << 8U);
-        usRegReadCount |= (uint16_t) (pucFrame[MB_PDU_FUNC_READWRITE_READ_REGCNT_OFF + 1]);
+        usRegReadCount = (uint16_t)(pucFrame[MB_PDU_FUNC_READWRITE_READ_REGCNT_OFF] << 8U);
+        usRegReadCount |= (uint16_t)(pucFrame[MB_PDU_FUNC_READWRITE_READ_REGCNT_OFF + 1]);
 
-        usRegWriteAddress = (uint16_t) (pucFrame[MB_PDU_FUNC_READWRITE_WRITE_ADDR_OFF] << 8U);
-        usRegWriteAddress |= (uint16_t) (pucFrame[MB_PDU_FUNC_READWRITE_WRITE_ADDR_OFF + 1]);
+        usRegWriteAddress = (uint16_t)(pucFrame[MB_PDU_FUNC_READWRITE_WRITE_ADDR_OFF] << 8U);
+        usRegWriteAddress |= (uint16_t)(pucFrame[MB_PDU_FUNC_READWRITE_WRITE_ADDR_OFF + 1]);
         usRegWriteAddress++;
 
-        usRegWriteCount = (uint16_t) (pucFrame[MB_PDU_FUNC_READWRITE_WRITE_REGCNT_OFF] << 8U);
-        usRegWriteCount |= (uint16_t) (pucFrame[MB_PDU_FUNC_READWRITE_WRITE_REGCNT_OFF + 1]);
+        usRegWriteCount = (uint16_t)(pucFrame[MB_PDU_FUNC_READWRITE_WRITE_REGCNT_OFF] << 8U);
+        usRegWriteCount |= (uint16_t)(pucFrame[MB_PDU_FUNC_READWRITE_WRITE_REGCNT_OFF + 1]);
 
         ucRegWriteByteCount = pucFrame[MB_PDU_FUNC_READWRITE_BYTECNT_OFF];
 
@@ -240,7 +239,7 @@ eMBException eMBFuncReadWriteMultipleHoldingRegister(uint8_t* pucFrame, uint16_t
                 *usLen += 1;
 
                 /* Second byte in the response contain the number of bytes. */
-                *pucFrameCur++ = (uint8_t) (usRegReadCount * 2);
+                *pucFrameCur++ = (uint8_t)(usRegReadCount * 2);
                 *usLen += 1;
 
                 /* Make the read callback. */

@@ -40,11 +40,11 @@ extern "C" {
  * MB_ASCII_TIMEOUT_WAIT_BEFORE_SEND_MS to allow for a delay before
  * the serial transmitter is enabled. This is required because some
  * targets are so fast that there is no time between receiving and
- * transmitting the frame. If the master is to slow with enabling its 
+ * transmitting the frame. If the master is to slow with enabling its
  * receiver then he will not receive the response correctly.
  */
 #ifndef MB_ASCII_TIMEOUT_WAIT_BEFORE_SEND_MS
-    #define MB_ASCII_TIMEOUT_WAIT_BEFORE_SEND_MS (0)
+#define MB_ASCII_TIMEOUT_WAIT_BEFORE_SEND_MS (0)
 #endif
 
 /*! \brief Maximum number of Modbus functions codes the protocol stack

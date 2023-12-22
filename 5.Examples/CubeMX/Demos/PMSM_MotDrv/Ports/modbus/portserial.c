@@ -3,7 +3,6 @@
 #include "mbport.h"
 #include "mbrtu.h"
 
-#include "main.h"
 #include "usart.h"
 #include "serial/bsp_uart.h"
 
@@ -23,6 +22,7 @@ void vMBPortSerialEnable(bool xRxEnable, bool xTxEnable)
     }
 }
 
+
 bool xMBPortSerialInit(uint8_t ucPort, uint32_t ulBaudRate, uint8_t ucDataBits, eMBParity eParity)
 {
     // ucPort is set by eMBInit
@@ -31,7 +31,8 @@ bool xMBPortSerialInit(uint8_t ucPort, uint32_t ulBaudRate, uint8_t ucDataBits, 
 
     if (ucPort == 1)
     {
-        huart = &huart1;
+			// PB6(TX) & PB7(RX)
+        huart = &huart1; 
     }
     else
     {
@@ -65,8 +66,6 @@ bool xMBPortSerialInit(uint8_t ucPort, uint32_t ulBaudRate, uint8_t ucDataBits, 
             case 8:
                 huart->Init.WordLength = UART_WORDLENGTH_9B;
                 break;
-            default:
-                return false;
         }
 
         switch (eParity)
@@ -86,6 +85,10 @@ bool xMBPortSerialInit(uint8_t ucPort, uint32_t ulBaudRate, uint8_t ucDataBits, 
 
     return true;
 }
+
+
+extern void modbus_rxcbk(const uint8_t* buffer, uint16_t length);
+extern void modbus_txcbk(void);			
 
 // call in main()
 void Modbus_StartReceive(void)
@@ -115,7 +118,7 @@ void HAL_UART_IdleCpltCallback(UART_HandleTypeDef* huart)
             {
                 mUartRxFrame[length] = '\0';
 
-                extern void modbus_rxcbk(const uint8_t* buffer, uint16_t length);
+							  SCB_InvalidateDCache();
                 modbus_rxcbk(mUartRxFrame, length);
             }
 
@@ -129,8 +132,7 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef* huart)
     if (huart->Instance == USART1)
     {
         __HAL_UART_DISABLE_IT(huart, UART_IT_TC);
-
-        extern void modbus_txcbk(void);
+      
         modbus_txcbk();
 
         Uart_SetWorkDir(UART_DIR_RX);

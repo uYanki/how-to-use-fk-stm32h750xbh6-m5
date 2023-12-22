@@ -33,8 +33,7 @@
 static uint8_t    ucMBAddress;
 static eMBMode  eMBCurrentMode;
 
-static enum
-{
+static enum{
     STATE_ENABLED,
     STATE_DISABLED,
     STATE_NOT_INITIALIZED

@@ -340,7 +340,7 @@
               <MiscControls></MiscControls>
               <Define>USE_HAL_DRIVER,STM32H750xx</Define>
               <Undefine></Undefine>
-              <IncludePath>../Core/Inc;../../../Board;C:/Users/uYanki/STM32Cube/Repository/STM32Cube_FW_H7_V1.11.1/Drivers/STM32H7xx_HAL_Driver/Inc;C:/Users/uYanki/STM32Cube/Repository/STM32Cube_FW_H7_V1.11.1/Drivers/STM32H7xx_HAL_Driver/Inc/Legacy;C:/Users/uYanki/STM32Cube/Repository/STM32Cube_FW_H7_V1.11.1/Drivers/CMSIS/Device/ST/STM32H7xx/Include;C:/Users/uYanki/STM32Cube/Repository/STM32Cube_FW_H7_V1.11.1/Drivers/CMSIS/Include;../../../Libraries/FreeModbus;../../../Libraries/FreeModbus/functions;../Ports</IncludePath>
+              <IncludePath>../Core/Inc;../../../Board;C:/Users/uYanki/STM32Cube/Repository/STM32Cube_FW_H7_V1.11.1/Drivers/STM32H7xx_HAL_Driver/Inc;C:/Users/uYanki/STM32Cube/Repository/STM32Cube_FW_H7_V1.11.1/Drivers/STM32H7xx_HAL_Driver/Inc/Legacy;C:/Users/uYanki/STM32Cube/Repository/STM32Cube_FW_H7_V1.11.1/Drivers/CMSIS/Device/ST/STM32H7xx/Include;C:/Users/uYanki/STM32Cube/Repository/STM32Cube_FW_H7_V1.11.1/Drivers/CMSIS/Include;../../../Libraries/FreeModbus;../Ports</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -645,32 +645,32 @@
             <File>
               <FileName>mbfunccoils.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\Libraries\FreeModbus\functions\mbfunccoils.c</FilePath>
+              <FilePath>..\..\..\Libraries\FreeModbus\mbfunccoils.c</FilePath>
             </File>
             <File>
               <FileName>mbfuncdisc.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\Libraries\FreeModbus\functions\mbfuncdisc.c</FilePath>
+              <FilePath>..\..\..\Libraries\FreeModbus\mbfuncdisc.c</FilePath>
             </File>
             <File>
               <FileName>mbfuncholding.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\Libraries\FreeModbus\functions\mbfuncholding.c</FilePath>
+              <FilePath>..\..\..\Libraries\FreeModbus\mbfuncholding.c</FilePath>
             </File>
             <File>
               <FileName>mbfuncinput.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\Libraries\FreeModbus\functions\mbfuncinput.c</FilePath>
+              <FilePath>..\..\..\Libraries\FreeModbus\mbfuncinput.c</FilePath>
             </File>
             <File>
               <FileName>mbfuncother.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\Libraries\FreeModbus\functions\mbfuncother.c</FilePath>
+              <FilePath>..\..\..\Libraries\FreeModbus\mbfuncother.c</FilePath>
             </File>
             <File>
               <FileName>mbutils.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\Libraries\FreeModbus\functions\mbutils.c</FilePath>
+              <FilePath>..\..\..\Libraries\FreeModbus\mbutils.c</FilePath>
             </File>
           </Files>
         </Group>

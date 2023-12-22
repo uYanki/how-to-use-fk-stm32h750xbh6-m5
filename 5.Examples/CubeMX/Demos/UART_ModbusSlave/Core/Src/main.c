@@ -102,7 +102,7 @@ int main(void)
     /* USER CODE BEGIN 2 */
     const uint8_t ucSlaveID[] = {0xAA, 0xBB, 0xCC};
     eMBInit(MB_RTU, 1, 1, 115200, MB_PAR_EVEN);
-    eMBSetSlaveID(0x34, true, ucSlaveID, 3);
+    eMBSetSlaveID(0x34, true, ucSlaveID, ARRAY_SIZE(ucSlaveID));
     eMBEnable();
     Modbus_StartReceive();
     /* USER CODE END 2 */
@@ -112,7 +112,6 @@ int main(void)
     while (1)
     {
         eMBPoll();
-        // printf("hello wrold\n");
         /* USER CODE END WHILE */
 
         /* USER CODE BEGIN 3 */

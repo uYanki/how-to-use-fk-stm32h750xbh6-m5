@@ -473,7 +473,7 @@
 
   <Group>
     <GroupName>Libraries/Modbus/Core</GroupName>
-    <tvExp>0</tvExp>
+    <tvExp>1</tvExp>
     <tvExpOptDlg>0</tvExpOptDlg>
     <cbSel>0</cbSel>
     <RteFlg>0</RteFlg>
@@ -520,7 +520,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\Libraries\FreeModbus\functions\mbfunccoils.c</PathWithFileName>
+      <PathWithFileName>..\..\..\Libraries\FreeModbus\mbfunccoils.c</PathWithFileName>
       <FilenameWithoutPath>mbfunccoils.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
@@ -532,7 +532,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\Libraries\FreeModbus\functions\mbfuncdisc.c</PathWithFileName>
+      <PathWithFileName>..\..\..\Libraries\FreeModbus\mbfuncdisc.c</PathWithFileName>
       <FilenameWithoutPath>mbfuncdisc.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
@@ -544,7 +544,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\Libraries\FreeModbus\functions\mbfuncholding.c</PathWithFileName>
+      <PathWithFileName>..\..\..\Libraries\FreeModbus\mbfuncholding.c</PathWithFileName>
       <FilenameWithoutPath>mbfuncholding.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
@@ -556,7 +556,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\Libraries\FreeModbus\functions\mbfuncinput.c</PathWithFileName>
+      <PathWithFileName>..\..\..\Libraries\FreeModbus\mbfuncinput.c</PathWithFileName>
       <FilenameWithoutPath>mbfuncinput.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
@@ -568,7 +568,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\Libraries\FreeModbus\functions\mbfuncother.c</PathWithFileName>
+      <PathWithFileName>..\..\..\Libraries\FreeModbus\mbfuncother.c</PathWithFileName>
       <FilenameWithoutPath>mbfuncother.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
@@ -580,7 +580,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\Libraries\FreeModbus\functions\mbutils.c</PathWithFileName>
+      <PathWithFileName>..\..\..\Libraries\FreeModbus\mbutils.c</PathWithFileName>
       <FilenameWithoutPath>mbutils.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
@@ -589,7 +589,7 @@
 
   <Group>
     <GroupName>Libraries/Modbus/Port</GroupName>
-    <tvExp>0</tvExp>
+    <tvExp>1</tvExp>
     <tvExpOptDlg>0</tvExpOptDlg>
     <cbSel>0</cbSel>
     <RteFlg>0</RteFlg>

@@ -26,7 +26,6 @@ typedef enum {
 #define M_PI_X2       6.2831852f  ///< 2π
 #define M_PI_X100     314         ///< 100π
 #define M_RAD2DGE     57.295779f  ///< 1 radians to 57.295780 degress
-#define M_DEG2RAD     0.017453f   ///< 1 degress to  0.017453 radians
 #define M_SQRT2       1.414213f   ///< sqrt(2)
 #define M_SQRT3       1.732050f   ///< sqrt(3)
 #define M_INVSQRT2    0.707106f   ///< 1/sqrt(2)

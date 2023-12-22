@@ -1,9 +1,9 @@
 #ifndef __GLOBAL_CONF_H__
 #define __GLOBAL_CONF_H__
 
+// 串口类型
 #define UART_MODE_NORMAL          0
 #define UART_MODE_RS485           1
-
 #define CONFIG_UART_MODE          UART_MODE_NORMAL
 
 // 串口重定向

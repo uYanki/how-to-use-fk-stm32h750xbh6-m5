@@ -1,4 +1,3 @@
-
 #ifndef _MB_H
 #define _MB_H
 
@@ -6,8 +5,6 @@
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdint.h>
-
-#define	INLINE                      inline
 
 #ifdef __cplusplus
 extern "C" {

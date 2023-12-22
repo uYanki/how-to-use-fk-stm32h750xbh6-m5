@@ -6,7 +6,6 @@
 
 /* ----------------------- Platform includes --------------------------------*/
 
-
 /* ----------------------- Modbus includes ----------------------------------*/
 #include "mb.h"
 #include "mbframe.h"
@@ -49,15 +48,15 @@ eMBException eMBFuncReadCoils(uint8_t* pucFrame, uint16_t* usLen)
 
     if (*usLen == (MB_PDU_FUNC_READ_SIZE + MB_PDU_SIZE_MIN))
     {
-        usRegAddress = (uint16_t) (pucFrame[MB_PDU_FUNC_READ_ADDR_OFF] << 8);
-        usRegAddress |= (uint16_t) (pucFrame[MB_PDU_FUNC_READ_ADDR_OFF + 1]);
+        usRegAddress = (uint16_t)(pucFrame[MB_PDU_FUNC_READ_ADDR_OFF] << 8);
+        usRegAddress |= (uint16_t)(pucFrame[MB_PDU_FUNC_READ_ADDR_OFF + 1]);
         usRegAddress++;
 
-        usCoilCount = (uint16_t) (pucFrame[MB_PDU_FUNC_READ_COILCNT_OFF] << 8);
-        usCoilCount |= (uint16_t) (pucFrame[MB_PDU_FUNC_READ_COILCNT_OFF + 1]);
+        usCoilCount = (uint16_t)(pucFrame[MB_PDU_FUNC_READ_COILCNT_OFF] << 8);
+        usCoilCount |= (uint16_t)(pucFrame[MB_PDU_FUNC_READ_COILCNT_OFF + 1]);
 
         /* Check if the number of registers to read is valid. If not
-         * return Modbus illegal data value exception. 
+         * return Modbus illegal data value exception.
          */
         if ((usCoilCount >= 1) && (usCoilCount < MB_PDU_FUNC_READ_COILCNT_MAX))
         {
@@ -73,11 +72,11 @@ eMBException eMBFuncReadCoils(uint8_t* pucFrame, uint16_t* usLen)
              * byte is only partially field with unused coils set to zero. */
             if ((usCoilCount & 0x0007) != 0)
             {
-                ucNBytes = (uint8_t) (usCoilCount / 8 + 1);
+                ucNBytes = (uint8_t)(usCoilCount / 8 + 1);
             }
             else
             {
-                ucNBytes = (uint8_t) (usCoilCount / 8);
+                ucNBytes = (uint8_t)(usCoilCount / 8);
             }
             *pucFrameCur++ = ucNBytes;
             *usLen += 1;
@@ -92,7 +91,7 @@ eMBException eMBFuncReadCoils(uint8_t* pucFrame, uint16_t* usLen)
             else
             {
                 /* The response contains the function code, the starting address
-                 * and the quantity of registers. We reuse the old values in the 
+                 * and the quantity of registers. We reuse the old values in the
                  * buffer because they are still valid. */
                 *usLen += ucNBytes;
                 ;
@@ -112,7 +111,7 @@ eMBException eMBFuncReadCoils(uint8_t* pucFrame, uint16_t* usLen)
     return eStatus;
 }
 
-    #if MB_FUNC_WRITE_COIL_ENABLED > 0
+#if MB_FUNC_WRITE_COIL_ENABLED > 0
 eMBException eMBFuncWriteCoil(uint8_t* pucFrame, uint16_t* usLen)
 {
     uint16_t usRegAddress;
@@ -123,8 +122,8 @@ eMBException eMBFuncWriteCoil(uint8_t* pucFrame, uint16_t* usLen)
 
     if (*usLen == (MB_PDU_FUNC_WRITE_SIZE + MB_PDU_SIZE_MIN))
     {
-        usRegAddress = (uint16_t) (pucFrame[MB_PDU_FUNC_WRITE_ADDR_OFF] << 8);
-        usRegAddress |= (uint16_t) (pucFrame[MB_PDU_FUNC_WRITE_ADDR_OFF + 1]);
+        usRegAddress = (uint16_t)(pucFrame[MB_PDU_FUNC_WRITE_ADDR_OFF] << 8);
+        usRegAddress |= (uint16_t)(pucFrame[MB_PDU_FUNC_WRITE_ADDR_OFF + 1]);
         usRegAddress++;
 
         if ((pucFrame[MB_PDU_FUNC_WRITE_VALUE_OFF + 1] == 0x00) && ((pucFrame[MB_PDU_FUNC_WRITE_VALUE_OFF] == 0xFF) || (pucFrame[MB_PDU_FUNC_WRITE_VALUE_OFF] == 0x00)))
@@ -160,9 +159,9 @@ eMBException eMBFuncWriteCoil(uint8_t* pucFrame, uint16_t* usLen)
     return eStatus;
 }
 
-    #endif
+#endif
 
-    #if MB_FUNC_WRITE_MULTIPLE_COILS_ENABLED > 0
+#if MB_FUNC_WRITE_MULTIPLE_COILS_ENABLED > 0
 eMBException eMBFuncWriteMultipleCoils(uint8_t* pucFrame, uint16_t* usLen)
 {
     uint16_t usRegAddress;
@@ -175,23 +174,23 @@ eMBException eMBFuncWriteMultipleCoils(uint8_t* pucFrame, uint16_t* usLen)
 
     if (*usLen > (MB_PDU_FUNC_WRITE_SIZE + MB_PDU_SIZE_MIN))
     {
-        usRegAddress = (uint16_t) (pucFrame[MB_PDU_FUNC_WRITE_MUL_ADDR_OFF] << 8);
-        usRegAddress |= (uint16_t) (pucFrame[MB_PDU_FUNC_WRITE_MUL_ADDR_OFF + 1]);
+        usRegAddress = (uint16_t)(pucFrame[MB_PDU_FUNC_WRITE_MUL_ADDR_OFF] << 8);
+        usRegAddress |= (uint16_t)(pucFrame[MB_PDU_FUNC_WRITE_MUL_ADDR_OFF + 1]);
         usRegAddress++;
 
-        usCoilCnt = (uint16_t) (pucFrame[MB_PDU_FUNC_WRITE_MUL_COILCNT_OFF] << 8);
-        usCoilCnt |= (uint16_t) (pucFrame[MB_PDU_FUNC_WRITE_MUL_COILCNT_OFF + 1]);
+        usCoilCnt = (uint16_t)(pucFrame[MB_PDU_FUNC_WRITE_MUL_COILCNT_OFF] << 8);
+        usCoilCnt |= (uint16_t)(pucFrame[MB_PDU_FUNC_WRITE_MUL_COILCNT_OFF + 1]);
 
         ucByteCount = pucFrame[MB_PDU_FUNC_WRITE_MUL_BYTECNT_OFF];
 
         /* Compute the number of expected bytes in the request. */
         if ((usCoilCnt & 0x0007) != 0)
         {
-            ucByteCountVerify = (uint8_t) (usCoilCnt / 8 + 1);
+            ucByteCountVerify = (uint8_t)(usCoilCnt / 8 + 1);
         }
         else
         {
-            ucByteCountVerify = (uint8_t) (usCoilCnt / 8);
+            ucByteCountVerify = (uint8_t)(usCoilCnt / 8);
         }
 
         if ((usCoilCnt >= 1) && (usCoilCnt <= MB_PDU_FUNC_WRITE_MUL_COILCNT_MAX) && (ucByteCountVerify == ucByteCount))
@@ -206,7 +205,7 @@ eMBException eMBFuncWriteMultipleCoils(uint8_t* pucFrame, uint16_t* usLen)
             else
             {
                 /* The response contains the function code, the starting address
-                 * and the quantity of registers. We reuse the old values in the 
+                 * and the quantity of registers. We reuse the old values in the
                  * buffer because they are still valid. */
                 *usLen = MB_PDU_FUNC_WRITE_MUL_BYTECNT_OFF;
             }
@@ -225,6 +224,6 @@ eMBException eMBFuncWriteMultipleCoils(uint8_t* pucFrame, uint16_t* usLen)
     return eStatus;
 }
 
-    #endif
+#endif
 
 #endif
