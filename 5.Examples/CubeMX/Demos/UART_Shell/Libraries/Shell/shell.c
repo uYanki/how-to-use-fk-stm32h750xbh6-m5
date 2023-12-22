@@ -1,10 +1,4 @@
-
 #include "shell.h"
-
-#include <stdbool.h>
-
-#include "shell_conf.h"
-#include "string.h"
 
 static cmd_t* cmds_begin;
 static cmd_t* cmds_end;

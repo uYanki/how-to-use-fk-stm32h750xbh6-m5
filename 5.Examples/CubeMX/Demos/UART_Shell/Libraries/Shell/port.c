@@ -1,3 +1,5 @@
+#include "gconf.h"
+#include "usart.h"
 
 extern UART_HandleTypeDef huart1;
 

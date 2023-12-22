@@ -1,6 +1,4 @@
-
 #include "shell.h"
-#include "string.h"
 
 /*
  * Memory manipulation utilities.

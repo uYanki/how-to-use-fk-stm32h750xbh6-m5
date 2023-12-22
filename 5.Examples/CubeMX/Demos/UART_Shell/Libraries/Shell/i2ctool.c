@@ -1,13 +1,7 @@
-
-
 #include "shell.h"
 #include "i2c.h"
-#include "shell_conf.h"
-#include "string.h"
 
-#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof(*arr))
-
-#define I2C_TIMEOUT     0xFF
+#define I2C_TIMEOUT  0xFF
 
 #if 0
 #define I2C_ADDR_MIN 0x00

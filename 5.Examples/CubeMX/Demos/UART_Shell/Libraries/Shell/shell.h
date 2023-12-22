@@ -1,4 +1,3 @@
-
 #ifndef __SHELL_H__
 #define __SHELL_H__
 
@@ -6,8 +5,10 @@
 extern "C" {
 #endif
 
-#include <stdint.h>
 #include <stdio.h>
+#include "defs.h"
+#include "shell_conf.h"
+#include "utils.h"
 
 #if defined(__CC_ARM) || defined(__CLANG_ARM) || 1 /* ARM Compiler */
 #define SECTION(x) __attribute__((section(x)))

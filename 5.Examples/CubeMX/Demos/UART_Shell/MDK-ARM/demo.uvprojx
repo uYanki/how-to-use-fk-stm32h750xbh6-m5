@@ -340,7 +340,7 @@
               <MiscControls></MiscControls>
               <Define>USE_HAL_DRIVER,STM32H750xx</Define>
               <Undefine></Undefine>
-              <IncludePath>../Core/Inc;../../../Board;../../../Libraries;C:/Users/uYanki/STM32Cube/Repository/STM32Cube_FW_H7_V1.11.1/Drivers/STM32H7xx_HAL_Driver/Inc;C:/Users/uYanki/STM32Cube/Repository/STM32Cube_FW_H7_V1.11.1/Drivers/STM32H7xx_HAL_Driver/Inc/Legacy;C:/Users/uYanki/STM32Cube/Repository/STM32Cube_FW_H7_V1.11.1/Drivers/CMSIS/Device/ST/STM32H7xx/Include;C:/Users/uYanki/STM32Cube/Repository/STM32Cube_FW_H7_V1.11.1/Drivers/CMSIS/Include</IncludePath>
+              <IncludePath>../Core/Inc;../../../Board;../../../Libraries;C:/Users/uYanki/STM32Cube/Repository/STM32Cube_FW_H7_V1.11.1/Drivers/STM32H7xx_HAL_Driver/Inc;C:/Users/uYanki/STM32Cube/Repository/STM32Cube_FW_H7_V1.11.1/Drivers/STM32H7xx_HAL_Driver/Inc/Legacy;C:/Users/uYanki/STM32Cube/Repository/STM32Cube_FW_H7_V1.11.1/Drivers/CMSIS/Device/ST/STM32H7xx/Include;C:/Users/uYanki/STM32Cube/Repository/STM32Cube_FW_H7_V1.11.1/Drivers/CMSIS/Include;..\Libraries</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -394,6 +394,11 @@
         <Group>
           <GroupName>Application/User/Core</GroupName>
           <Files>
+            <File>
+              <FileName>gconf.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Core\Inc\gconf.h</FilePath>
+            </File>
             <File>
               <FileName>main.c</FileName>
               <FileType>1</FileType>
@@ -618,29 +623,31 @@
           <GroupName>Libraries/Shell</GroupName>
           <Files>
             <File>
-              <FileName>shell.c</FileName>
+              <FileName>port.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\Libraries\shell\shell.c</FilePath>
-            </File>
-            <File>
-              <FileName>string.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\Libraries\shell\string.c</FilePath>
+              <FilePath>..\Libraries\Shell\port.c</FilePath>
             </File>
             <File>
               <FileName>i2ctool.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\Libraries\Shell\i2ctool.c</FilePath>
+              <FilePath>..\Libraries\Shell\i2ctool.c</FilePath>
             </File>
             <File>
               <FileName>memtool.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\Libraries\Shell\memtool.c</FilePath>
+              <FilePath>..\Libraries\Shell\memtool.c</FilePath>
+            </File>
+            <File>
+              <FileName>shell.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Libraries\Shell\shell.c</FilePath>
+            </File>
+            <File>
+              <FileName>utils.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Libraries\Shell\utils.c</FilePath>
             </File>
           </Files>
-        </Group>
-        <Group>
-          <GroupName>::CMSIS</GroupName>
         </Group>
         <Group>
           <GroupName>Drivers/STM32H7xx_HAL_Driver</GroupName>
@@ -1835,6 +1842,9 @@
               </FileOption>
             </File>
           </Files>
+        </Group>
+        <Group>
+          <GroupName>::CMSIS</GroupName>
         </Group>
       </Groups>
     </Target>

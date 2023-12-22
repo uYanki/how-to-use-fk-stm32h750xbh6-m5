@@ -1,6 +1,5 @@
-
-#ifndef __STRING_H__
-#define __STRING_H__
+#ifndef __UTILS_H__
+#define __UTILS_H__
 
 #ifdef __cplusplus
 extern "C" {
