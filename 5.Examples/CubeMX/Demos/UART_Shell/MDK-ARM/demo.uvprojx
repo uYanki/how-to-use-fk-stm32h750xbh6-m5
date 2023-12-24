@@ -323,7 +323,7 @@
             <PlainCh>0</PlainCh>
             <Ropi>0</Ropi>
             <Rwpi>0</Rwpi>
-            <wLevel>3</wLevel>
+            <wLevel>1</wLevel>
             <uThumb>0</uThumb>
             <uSurpInc>0</uSurpInc>
             <uC99>1</uC99>
@@ -623,24 +623,19 @@
           <GroupName>Libraries/Shell</GroupName>
           <Files>
             <File>
+              <FileName>conf.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Libraries\Shell\conf.h</FilePath>
+            </File>
+            <File>
               <FileName>port.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Libraries\Shell\port.c</FilePath>
             </File>
             <File>
-              <FileName>i2ctool.c</FileName>
+              <FileName>core.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Libraries\Shell\i2ctool.c</FilePath>
-            </File>
-            <File>
-              <FileName>memtool.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Libraries\Shell\memtool.c</FilePath>
-            </File>
-            <File>
-              <FileName>shell.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Libraries\Shell\shell.c</FilePath>
+              <FilePath>..\Libraries\Shell\core.c</FilePath>
             </File>
             <File>
               <FileName>utils.c</FileName>

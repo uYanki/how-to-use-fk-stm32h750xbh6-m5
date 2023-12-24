@@ -10,6 +10,7 @@
                 "C:\\Users\\uYanki\\STM32Cube\\Repository\\STM32Cube_FW_H7_V1.11.1\\Drivers\\STM32H7xx_HAL_Driver\\Inc\\Legacy",
                 "C:\\Users\\uYanki\\STM32Cube\\Repository\\STM32Cube_FW_H7_V1.11.1\\Drivers\\CMSIS\\Device\\ST\\STM32H7xx\\Include",
                 "C:\\Users\\uYanki\\STM32Cube\\Repository\\STM32Cube_FW_H7_V1.11.1\\Drivers\\CMSIS\\Include",
+                "f:\\how-to-use-fk-stm32h750xbh6-m4\\5.Examples\\CubeMX\\Demos\\UART_Shell\\Libraries",
                 "C:\\Keil_v5\\ARM\\ARMCLANG\\include",
                 "C:\\Keil_v5\\ARM\\ARMCLANG\\include\\arm_linux",
                 "C:\\Keil_v5\\ARM\\ARMCLANG\\include\\arm_linux_compat",
@@ -19,8 +20,7 @@
                 "f:\\how-to-use-fk-stm32h750xbh6-m4\\5.Examples\\CubeMX\\Board\\system",
                 "f:\\how-to-use-fk-stm32h750xbh6-m4\\5.Examples\\CubeMX\\Board\\pinctrl",
                 "f:\\how-to-use-fk-stm32h750xbh6-m4\\5.Examples\\CubeMX\\Board\\serial",
-                "f:\\how-to-use-fk-stm32h750xbh6-m4\\5.Examples\\CubeMX\\Libraries\\shell",
-                "f:\\how-to-use-fk-stm32h750xbh6-m4\\5.Examples\\CubeMX\\Libraries\\Shell",
+                "f:\\how-to-use-fk-stm32h750xbh6-m4\\5.Examples\\CubeMX\\Demos\\UART_Shell\\Libraries\\Shell",
                 "C:\\Users\\uYanki\\STM32Cube\\Repository\\STM32Cube_FW_H7_V1.11.1\\Drivers\\STM32H7xx_HAL_Driver\\Src"
             ],
             "defines": [

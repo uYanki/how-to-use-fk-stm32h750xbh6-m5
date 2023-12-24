@@ -25,6 +25,9 @@ typedef uint64_t u64;
 
 typedef float  f32;
 typedef double f64;
+		
+typedef float  float32_t;
+typedef double float64_t;
 
 #define RW
 #define WO

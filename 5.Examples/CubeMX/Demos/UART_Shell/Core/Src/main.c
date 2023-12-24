@@ -25,7 +25,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "bsp.h"
-#include "shell/shell.h"
+#include "shell/port.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -46,6 +46,15 @@
 
 /* USER CODE BEGIN PV */
 
+//static int show_history(int argc, char** argv)
+//{
+//    shell_show_history(&shell);
+
+//    return 0;
+//}
+
+//CMD_EXPORT(history, "Show command history", show_history);
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -58,7 +67,7 @@ static void MPU_Config(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-int blink(int argc, char** argv)
+int blink(shell_t* shell, int argc, char** argv)
 {
     if (argc != 2)
     {
@@ -71,7 +80,7 @@ int blink(int argc, char** argv)
         return -1;
     }
 
-    uint8_t state = _atoi(argv[1]);
+    uint8_t state = atoi(argv[1]);
 
     switch (state)
     {
@@ -93,7 +102,7 @@ int blink(int argc, char** argv)
     return 0;
 }
 
-CMD_EXPORT(led, "led control", blink)
+CMD_EXPORT_FUNC(CMD_TYPE(CMD_TYPE_FUNC_MAIN), led, blink, "led control")
 
 /* USER CODE END 0 */
 
@@ -131,14 +140,15 @@ int main(void)
     MX_USART1_UART_Init();
     MX_I2C1_Init();
     /* USER CODE BEGIN 2 */
-    shell_init();
+    shell_setup();
     /* USER CODE END 2 */
 
     /* Infinite loop */
     /* USER CODE BEGIN WHILE */
     while (1)
     {
-        shell_loop();
+        shell_task();
+
         /* USER CODE END WHILE */
 
         /* USER CODE BEGIN 3 */
