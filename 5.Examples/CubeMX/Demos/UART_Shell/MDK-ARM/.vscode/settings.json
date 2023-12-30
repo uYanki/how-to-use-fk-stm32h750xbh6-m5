@@ -45,6 +45,17 @@
         "defs.h": "c",
         "utils.h": "c",
         "limits": "c",
-        "type_traits": "c"
+        "type_traits": "c",
+        "iosfwd": "c",
+        "cstddef": "c",
+        "modbus.h": "c",
+        "__functional_base": "c",
+        "istream": "c",
+        "memory": "c",
+        "tuple": "c",
+        "*.tcc": "c",
+        "functional": "c",
+        "__locale": "c",
+        "system.h": "c"
     }
 }

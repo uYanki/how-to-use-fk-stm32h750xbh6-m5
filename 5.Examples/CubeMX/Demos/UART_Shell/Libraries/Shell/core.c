@@ -3,6 +3,19 @@
 
 //-----------------------------------------------------------------------------
 
+#define REG8S(ADDR)            (*(int8_t*)(ADDR))
+#define REG8U(ADDR)            (*(uint8_t*)(ADDR))
+#define REG16S(ADDR)           (*(int16_t*)(ADDR))
+#define REG16U(ADDR)           (*(uint16_t*)(ADDR))
+#define REG32S(ADDR)           (*(int32_t*)(ADDR))
+#define REG32U(ADDR)           (*(uint32_t*)(ADDR))
+#define REG32F(ADDR)           (*(float32_t*)(ADDR))
+#define REG64F(ADDR)           (*(float64_t*)(ADDR))
+
+#define INCLOSE(min, val, max) (((min) <= (val)) && ((val) <= (max)))
+
+//-----------------------------------------------------------------------------
+
 typedef enum {
     DIR_PREV,
     DIR_NEXT,
@@ -12,6 +25,26 @@ typedef enum {
     DEL_PREV,  // 光标前
     DEL_CURR,  // 光标处
 } del_e;
+
+typedef enum {
+    CONV_STATE_NONE,  // 没有转换
+    CONV_STATE_HALT,  // 转换部分
+    CONV_STATE_FULL,  // 转换全部
+} conv_state_e;
+
+typedef enum {
+    SIGN_POS,
+    SIGN_NEG,
+} sign_e;
+
+typedef enum {
+    TYPE_NEG_INT,
+    TYPE_POS_INT,
+    TYPE_FLOAT,
+    TYPE_STRING,
+} arg_type_e;
+
+//-----------------------------------------------------------------------------
 
 static bool shell_key_scan(shell_t* shell, uint8_t data);
 
@@ -23,15 +56,19 @@ void history_swtich(shell_t* shell, dir_e dir);
 static void shell_insert_byte(shell_t* shell, uint8_t data);
 static void shell_remove_byte(shell_t* shell, del_e dir);
 
-static void shell_parse(shell_t* shell);
+static bool shell_parse_cmd(shell_t* shell);
+arg_type_e  shell_parse_arg(shell_t* shell, char* str, uint32_t* ret);
 static void shell_exec(shell_t* shell);
 
 static cmd_t* shell_seek_cmd(shell_t* shell, const char* str);
 
 static int  shell_call_func(shell_t* shell, cmd_t* cmd);
 static void shell_show_var(shell_t* shell, cmd_t* cmd);
+static void shell_set_var(shell_t* shell, char* name, void* value);
 
 static void shell_show_help(shell_t* shell, int argc, char* argv[]);
+static void shell_show_logo(shell_t* shell);
+static void shell_show_prompt(shell_t* shell);
 
 static void console_delete_char(shell_t* shell);
 static void console_delete_chars(shell_t* shell, uint16_t size);
@@ -40,115 +77,22 @@ static void console_clear_line(shell_t* shell);
 
 static char* shell_get_cmd_name(shell_t* shell, cmd_t* cmd);
 static char* shell_get_cmd_desc(shell_t* shell, cmd_t* cmd);
-static char* shell_get_cmd_type(shell_t* shell, cmd_t* cmd);
-
-void shell_remove_args_quotes(shell_t* shell);
 
 //-----------------------------------------------------------------------------
-
-static char shellExtParseChar(char* string)
-{
-    char* p     = string + 1;
-    char  value = 0;
-
-    if (*p == '\\')
-    {
-        switch (*(p + 1))
-        {
-            case 'b':
-                value = '\b';
-                break;
-            case 'r':
-                value = '\r';
-                break;
-            case 'n':
-                value = '\n';
-                break;
-            case 't':
-                value = '\t';
-                break;
-            case '0':
-                value = 0;
-                break;
-            default:
-                value = *(p + 1);
-                break;
-        }
-    }
-    else
-    {
-        value = *p;
-    }
-    return value;
-}
-
-static char* shellExtParseString(char* string)
-{
-    char*          p     = string;
-    unsigned short index = 0;
-
-    if (*string == '\"')
-    {
-        p = ++string;
-    }
-
-    while (*p)
-    {
-        if (*p == '\\')
-        {
-            *(string + index) = shellExtParseChar(p - 1);
-            p++;
-        }
-        else if (*p == '\"')
-        {
-            *(string + index) = 0;
-        }
-        else
-        {
-            *(string + index) = *p;
-        }
-        p++;
-        index++;
-    }
-    *(string + index) = 0;
-    return string;
-}
-
-int32_t shell_ext_parse_value(shell_t* shell, char* argv)
-{
-    switch (*argv)
-    {
-        case '$':  // var
-        {
-            break;
-        }
-
-        case '-':
-        case '+':
-        case '0' ... '9':  // num
-        {
-            return atoi(argv);
-        }
-
-        default:
-            return (int)shellExtParseString(argv);
-    }
-}
 
 static int shell_call_func(shell_t* shell, cmd_t* cmd)
 {
     if (cmd->attr.bits.type == CMD_TYPE_FUNC_MAIN)
     {
-        shell_remove_args_quotes(shell);
         int ret = cmd->func.cbk(shell, shell->parser.argc, shell->parser.argv);
     }
     else if (cmd->attr.bits.type == CMD_TYPE_FUNC_C)
     {
-        uint8_t argc = cmd->attr.bits.argc;
+        uint8_t argc = cmd->attr.bits.ext.argc;
 
         if (argc != (shell->parser.argc - 1))
         {
-            shell_printf(shell, "Too many or too few arguments. Only %d parameters are needed.\n", argc);
+            shell_printf(shell, "Too few or too many arguments. Only %d parameters are needed.\r\n", argc);
             goto _error;
         }
 
@@ -156,7 +100,7 @@ static int shell_call_func(shell_t* shell, cmd_t* cmd)
 
         for (uint8_t i = 0; i < argc; i++)
         {
-            args[i] = shell_ext_parse_value(shell, shell->parser.argv[i + 1]);
+            shell_parse_arg(shell, shell->parser.argv[i + 1], &args[i]);
         }
 
         switch (argc)
@@ -249,69 +193,75 @@ _error:
     return -1;
 }
 
+void shell_log(shell_t* shell, char* buffer)
+{
+    shell->puts("\033[2K\r");
+    shell->puts(buffer);
+    shell_show_prompt(shell);
+
+    if (shell->parser.length > 0)
+    {
+        shell_printf(shell, shell->parser.buffer);
+
+        for (uint16_t i = shell->parser.cursor; i < shell->parser.length; i++)
+        {
+            shell->puts("\b");
+        }
+    }
+}
+
 static void shell_show_var(shell_t* shell, cmd_t* cmd)
 {
-    if (cmd->attr.bits.rw != CMD_WO)
+    if (cmd->attr.bits.ext.rw != CMD_WO)
     {
-        shell->puts((char*)cmd->var.name);
-        shell->puts(" = ");
+        shell_printf(shell, "%s = ", cmd->var.name);
+
+        void* addr = cmd->var.addr;
 
         switch (cmd->attr.bits.type)
         {
             case CMD_TYPE_VAR_STRING: {
-                shell->putc('\"');
-                shell->puts((char*)cmd->var.addr);
-                shell->putc('\"');
+                shell_printf(shell, "\"%s\"", (char*)cmd->var.addr);
+                break;
             }
-            break;
             case CMD_TYPE_VAR_INT8: {
-                int8_t v = *(int8_t*)(cmd->var.addr);
-                shell_printf(shell, "%11d, 0x%X", v, v);
+                shell_printf(shell, "%d, 0x%X", REG8S(addr), REG8S(addr));
                 break;
             }
             case CMD_TYPE_VAR_UINT8: {
-                uint8_t v = *(uint8_t*)(cmd->var.addr);
-                shell_printf(shell, "%11d, 0x%X", v, v);
+                shell_printf(shell, "%d, 0x%X", REG8U(addr), REG8U(addr));
                 break;
             }
             case CMD_TYPE_VAR_INT16: {
-                int16_t v = *(int16_t*)(cmd->var.addr);
-                shell_printf(shell, "%11d, 0x%X", v, v);
+                shell_printf(shell, "%d, 0x%X", REG16S(addr), REG16S(addr));
                 break;
             }
             case CMD_TYPE_VAR_UINT16: {
-                uint16_t v = *(uint16_t*)(cmd->var.addr);
-                shell_printf(shell, "%11d, 0x%X", v, v);
+                shell_printf(shell, "%d, 0x%X", REG16U(addr), REG16U(addr));
                 break;
             }
             case CMD_TYPE_VAR_INT32: {
-                int32_t v = *(int32_t*)(cmd->var.addr);
-                shell_printf(shell, "%11d, 0x%X", v, v);
+                shell_printf(shell, "%d, 0x%X", REG32S(addr), REG32S(addr));
                 break;
             }
             case CMD_TYPE_VAR_UINT32: {
-                uint32_t v = *(uint32_t*)(cmd->var.addr);
-                shell_printf(shell, "%11d, 0x%X", v, v);
+                shell_printf(shell, "%d, 0x%X", REG32U(addr), REG32U(addr));
                 break;
             }
             case CMD_TYPE_VAR_INT64: {
-                int64_t v = *(int64_t*)(cmd->var.addr);
-                shell_printf(shell, "%11d, 0x%X", v, v);
+                shell_printf(shell, "%d, 0x%X", REG64S(addr), REG64S(addr));
                 break;
             }
             case CMD_TYPE_VAR_UINT64: {
-                uint64_t v = *(uint64_t*)(cmd->var.addr);
-                shell_printf(shell, "%11d, 0x%X", v, v);
+                shell_printf(shell, "%d, 0x%X", REG64U(addr), REG64U(addr));
                 break;
             }
             case CMD_TYPE_VAR_FLOAT32: {
-                float32_t v = *(float32_t*)(cmd->var.addr);
-                shell_printf(shell, "%.6f", v);
+                shell_printf(shell, "%f", REG32F(addr));
                 break;
             }
             case CMD_TYPE_VAR_FLOAT64: {
-                float64_t v = *(float64_t*)(cmd->var.addr);
-                shell_printf(shell, "%.12f", v);
+                shell_printf(shell, "%lf", REG64F(addr));
                 break;
             }
             default: {
@@ -320,7 +270,7 @@ static void shell_show_var(shell_t* shell, cmd_t* cmd)
             }
         }
 
-        shell->putc('\n');
+        shell->puts("\r\n");
     }
 }
 
@@ -342,92 +292,89 @@ void shell_show_cmd(shell_t* shell, cmd_t* cmd)
 {
     char* name = shell_get_cmd_name(shell, cmd);
     char* desc = shell_get_cmd_desc(shell, cmd);
-    char* type = shell_get_cmd_type(shell, cmd);
 
-    shell->putc('  ');
-
-    if (name != NULL)
+    if (name == NULL)
     {
-        shell->puts(name);
+        name = "";
     }
 
-    shell->putc('\t');
-
-    if (type != NULL)
+    if (desc == NULL)
     {
-        shell->puts(type);
+        desc = "";
     }
 
-    shell->putc('\t');
-
-    if (desc != NULL)
-    {
-        shell->puts(desc);
-    }
-
-    shell->putc('\n');
+    shell_printf(shell, "  %-20s\t%s\r\n", name, desc);
 }
 
-void shell_get_var(shell_t* shell, cmd_t* cmd)
+static void shell_set_var(shell_t* shell, char* name, void* value)
 {
-    // shell->puts("can't get write only var");
-    // shell->putc('\n');
-    // pass
-}
+    cmd_t* cmd = shell_seek_cmd(shell, name);
 
-void shell_set_var(shell_t* shell, cmd_t* cmd, void* value)
-{
-    if (cmd->attr.bits.rw == CMD_RO)
+    if (cmd == NULL)
     {
-        shell->puts("can't set read only var");
-        shell->putc('\n');
+        shell->puts("Variable does not exist\r\n");
     }
     else
     {
-        switch (cmd->attr.bits.type)
+        if (cmd->attr.bits.ext.rw == CMD_RO)
         {
-            case CMD_TYPE_VAR_STRING:
-                strcpy((char*)(cmd->var.addr), (char*)(value));
-                break;
-            case CMD_TYPE_VAR_INT8:
-                *(int8_t*)(cmd->var.addr) = *(int8_t*)value;
-                break;
-            case CMD_TYPE_VAR_UINT8:
-                *(uint8_t*)(cmd->var.addr) = *(uint8_t*)value;
-                break;
-            case CMD_TYPE_VAR_INT16:
-                *(int16_t*)(cmd->var.addr) = *(int16_t*)value;
-                break;
-            case CMD_TYPE_VAR_UINT16:
-                *(uint16_t*)(cmd->var.addr) = *(uint16_t*)value;
-                break;
-            case CMD_TYPE_VAR_INT32:
-                *(uint32_t*)(cmd->var.addr) = *(int32_t*)value;
-                break;
-            case CMD_TYPE_VAR_UINT32:
-                *(uint32_t*)(cmd->var.addr) = *(uint32_t*)value;
-                break;
-            case CMD_TYPE_VAR_INT64:
-                *(int64_t*)(cmd->var.addr) = *(int64_t*)value;
-                break;
-            case CMD_TYPE_VAR_UINT64:
-                *(uint64_t*)(cmd->var.addr) = *(uint64_t*)value;
-                break;
-            case CMD_TYPE_VAR_FLOAT32:
-                *(float32_t*)(cmd->var.addr) = *(float32_t*)value;
-                break;
-            case CMD_TYPE_VAR_FLOAT64:
-                *(float64_t*)(cmd->var.addr) = *(float64_t*)value;
-                break;
-            default:
-                break;
+            shell->puts("can't set read only var\r\n");
+        }
+        else
+        {
+            switch (cmd->attr.bits.type)
+            {
+                case CMD_TYPE_VAR_STRING:
+                    strcpy((char*)(cmd->var.addr), (const char*)(value));
+                    break;
+                case CMD_TYPE_VAR_INT8:
+                case CMD_TYPE_VAR_UINT8:
+                    memcpy(cmd->var.addr, value, 1);
+                    break;
+                case CMD_TYPE_VAR_INT16:
+                case CMD_TYPE_VAR_UINT16:
+                    memcpy(cmd->var.addr, value, 2);
+                    break;
+                case CMD_TYPE_VAR_INT32:
+                case CMD_TYPE_VAR_UINT32:
+                case CMD_TYPE_VAR_FLOAT32:
+                    memcpy(cmd->var.addr, value, 4);
+                    break;
+                case CMD_TYPE_VAR_INT64:
+                case CMD_TYPE_VAR_UINT64:
+                case CMD_TYPE_VAR_FLOAT64:
+                    memcpy(cmd->var.addr, value, 8);
+                    break;
+                default:
+                    break;
+            }
         }
     }
 }
 
-void shell_show_prompt(shell_t* shell)
+CMD_EXPORT_FUNC(CMD_TYPE(CMD_TYPE_FUNC_C) | CMD_FUNC_ARGC(2), setv, shell_set_var, set var)
+
+static void shell_show_logo(shell_t* shell)
 {
-    shell->puts(shell->prompt);
+    // http://patorjk.com/software/taag
+    // Font Name: Delta Corps Priest 1
+
+    shell->puts("\r\n");
+    shell->puts("███    █▄     ▄████████    ▄█    █▄       ▄████████  ▄█        ▄█       \r\n");
+    shell->puts("███    ███   ███    ███   ███    ███     ███    ███ ███       ███       \r\n");
+    shell->puts("███    ███   ███    █▀    ███    ███     ███    █▀  ███       ███       \r\n");
+    shell->puts("███    ███   ███         ▄███▄▄▄▄███▄▄  ▄███▄▄▄     ███       ███       \r\n");
+    shell->puts("███    ███ ▀███████████ ▀▀███▀▀▀▀███▀  ▀▀███▀▀▀     ███       ███       \r\n");
+    shell->puts("███    ███          ███   ███    ███     ███    █▄  ███       ███       \r\n");
+    shell->puts("███    ███    ▄█    ███   ███    ███     ███    ███ ███▌    ▄ ███▌    ▄ \r\n");
+    shell->puts("████████▀   ▄████████▀    ███    █▀      ██████████ █████▄▄██ █████▄▄██ \r\n");
+    shell->puts("                                                    ▀         ▀         \r\n");
+    shell->puts("\r\n");
+}
+
+static void shell_show_prompt(shell_t* shell)
+{
+    shell_printf(shell, shell->prompt);
 }
 
 void shell_init(shell_t* shell, char buffer[], uint16_t capacity)
@@ -446,15 +393,24 @@ void shell_init(shell_t* shell, char buffer[], uint16_t capacity)
     shell->cmds.base  = (cmd_t*)(&CMDS$$Base);
     shell->cmds.count = ((uint32_t)&CMDS$$Limit - (uint32_t)&CMDS$$Base) / sizeof(cmd_t);
 
+    extern const uint32_t KEYS$$Base;
+    extern const uint32_t KEYS$$Limit;
+
+    shell->keys.base  = (cmd_t*)(&KEYS$$Base);
+    shell->keys.count = ((uint32_t)&KEYS$$Limit - (uint32_t)&KEYS$$Base) / sizeof(cmd_t);
+
 #elif defined(__ICCARM__) || defined(__ICCRX__)
 
     shell->cmds.base  = (cmd_t*)(__section_begin("CMDS"));
     shell->cmds.count = ((uint32_t)(__section_end("CMDS")) - (uint32_t)(__section_begin("CMDS"))) / sizeof(cmd_t);
 
+    shell->cmds.base  = (cmd_t*)(__section_begin("KEYS"));
+    shell->cmds.count = ((uint32_t)(__section_end("KEYS")) - (uint32_t)(__section_begin("KEYS"))) / sizeof(cmd_t);
+
 #elif defined(__GNUC__)
 
-    shell->cmds.base  = (cmd_t*)(&_shell_command_start);
-    shell->cmds.count = ((uint32_t)(&_shell_command_end) - (uint32_t)(&_shell_command_start)) / sizeof(cmd_t);
+    // shell->cmds.base  = (cmd_t*)(&_shell_command_start);
+    // shell->cmds.count = ((uint32_t)(&_shell_command_end) - (uint32_t)(&_shell_command_start)) / sizeof(cmd_t);
 
 #else
 
@@ -486,7 +442,8 @@ void shell_init(shell_t* shell, char buffer[], uint16_t capacity)
         base[i].hash = (name == NULL) ? 0 : generate_hash(name);
     }
 
-    shell->putc('\n');
+    console_clear_screen(shell);
+    shell_show_logo(shell);
     shell_show_prompt(shell);
 }
 
@@ -505,35 +462,11 @@ void shell_loop(shell_t* shell)
     }
 }
 
-void shell_remove_args_quotes(shell_t* shell)
-{
-    for (uint16_t i = 0; i < shell->parser.argc; ++i)
-    {
-        char* p = shell->parser.argv[i];
-
-        if (*p == '\"')
-        {
-            *p++ = '\0';
-
-            shell->parser.argv[i] = p;
-        }
-
-        uint16_t len = strlen(p);
-
-        if (p[len - 1] == '\"')
-        {
-            p[len - 1] = '\0';
-        }
-    }
-}
-
 static void shell_insert_byte(shell_t* shell, uint8_t data)
 {
     if (shell->parser.length >= (shell->parser.capacity - 1))
     {
-        shell->putc('\n');
-        shell->puts("Warning: Command is too long");
-        shell->putc('\n');
+        shell->puts("\r\nWarning: Command is too long\r\n");
         shell_show_prompt(shell);
         shell->puts(shell->parser.buffer);
         return;
@@ -546,7 +479,7 @@ static void shell_insert_byte(shell_t* shell, uint8_t data)
         shell->parser.length = shell->parser.cursor;
         shell->parser.buffer[shell->parser.length] = '\0';
         // clang-format on
-        shell->putc(data);
+        shell_printf(shell, "%c", data);
     }
     else if (shell->parser.cursor < shell->parser.length)
     {
@@ -564,13 +497,11 @@ static void shell_insert_byte(shell_t* shell, uint8_t data)
         shell->parser.buffer[shell->parser.cursor++] = data;
         shell->parser.buffer[++shell->parser.length] = 0;
 
-        for (i = shell->parser.cursor - 1; i < shell->parser.length; i++)
-        {
-            shell->putc(shell->parser.buffer[i]);
-        }
+        shell->puts(&shell->parser.buffer[shell->parser.cursor - 1]);
+
         for (i = shell->parser.length - shell->parser.cursor; i > 0; i--)
         {
-            shell->putc('\b');
+            shell->puts("\b");
         }
 
         // replace mode...
@@ -613,30 +544,28 @@ static void shell_remove_byte(shell_t* shell, del_e dir)
         if (!offset)
         {
             shell->parser.cursor--;
-            shell->putc('\b');
+            shell->puts("\b");
         }
 
         shell->parser.buffer[shell->parser.length] = '\0';
 
-        for (i = shell->parser.cursor; i < shell->parser.length; i++)
-        {
-            shell->putc(shell->parser.buffer[i]);
-        }
+        shell->puts(&shell->parser.buffer[shell->parser.cursor]);
 
-        shell->putc(' ');
+        // the last char
+        shell->puts(" ");
 
         for (i = shell->parser.length - shell->parser.cursor + 1; i > 0; i--)
         {
-            shell->putc('\b');
+            shell->puts("\b");
         }
     }
 }
 
 static bool shell_key_scan(shell_t* shell, uint8_t data)
 {
-    cmd_t* base = shell->cmds.base;
+    cmd_t* base = shell->keys.base;
 
-    for (uint16_t i = 0; i < shell->cmds.count; ++i)
+    for (uint16_t i = 0; i < shell->keys.count; ++i)
     {
         if (base[i].attr.bits.type == CMD_TYPE_KEY)
         {
@@ -680,62 +609,13 @@ static bool shell_key_scan(shell_t* shell, uint8_t data)
         }
     }
 
-    // reset byteshift
-    shell->parser.byteshift = 24;
-
     return false;
-}
-
-static void shell_parse(shell_t* shell)
-{
-    uint16_t i;
-
-    shell->parser.argc = 0;
-
-    bool quotes = false;  // macth string
-    bool record = true;
-
-    for (char* p = shell->parser.buffer; *p != '\0'; ++p)
-    {
-        if (*p == ' ')
-        {
-            // not string
-            if (quotes == false)
-            {
-                *p = '\0';
-
-                // new arg
-                record = true;
-            }
-
-            continue;
-        }
-        else if (*p == '\"')
-        {
-            quotes = !quotes;
-        }
-
-        if (record == true)
-        {
-            shell->parser.argv[shell->parser.argc++] = p;
-
-            if (shell->parser.argc == (CONFIG_SHELL_PARAMETER_MAX_COUNT + 1))
-            {
-                break;
-            }
-
-            record = false;
-        }
-    }
-
-    for (i = shell->parser.argc; i < (CONFIG_SHELL_PARAMETER_MAX_COUNT + 1); i++)
-    {
-        shell->parser.argv[i] = NULL;
-    }
 }
 
 static void shell_exec(shell_t* shell)
 {
+    shell->puts("\r\n");
+
     if (shell->parser.length == 0)
     {
         return;
@@ -745,24 +625,18 @@ static void shell_exec(shell_t* shell)
     history_append(shell);
 #endif
 
-    shell_parse(shell);
-
-    if (shell->parser.argc == 0)
+    if (shell_parse_cmd(shell) == false)
     {
-        // all chars are whitespace
         return;
     }
 
     cmd_t* cmd = shell_seek_cmd(shell, shell->parser.argv[0]);
 
-    shell->putc('\n');
-
     if (cmd == NULL)
     {
-        shell->puts("Command not Found: ");
-        shell->putc('\"');
+        shell->puts("Command not Found: \"");
         shell->puts(shell->parser.buffer);
-        shell->putc('\"');
+        shell->puts("\"\r\n");
     }
     else
     {
@@ -837,25 +711,407 @@ static char* shell_get_cmd_name(shell_t* shell, cmd_t* cmd)
     return NULL;
 }
 
-static char* shell_get_cmd_type(shell_t* shell, cmd_t* cmd)
+static conv_state_e scan_int(char* str, uint8_t base, uint32_t* ret, char** pend)
 {
-    if (__cmd_type_func_start < cmd->attr.bits.type && cmd->attr.bits.type < __cmd_type_func_end)
+    char* pcur = str;
+
+    uint32_t num = 0;
+    uint8_t  addon;
+
+    if (*pcur)
     {
-        return "FUNC";
-    }
-    else if (__cmd_type_var_start < cmd->attr.bits.type && cmd->attr.bits.type < __cmd_type_var_end)
-    {
-        return "VAR";
-    }
-    else if (cmd->attr.bits.type == CMD_TYPE_KEY)
-    {
-        return "KEY";
+        for (; *pcur; ++pcur)
+        {
+            if (base < 10)
+            {
+                if (INCLOSE('0', *pcur, '0' - 1 + base))
+                {
+                    addon = *pcur - '0';
+                }
+                else
+                {
+                    break;
+                }
+            }
+            else
+            {
+                if (INCLOSE('0', *pcur, '9'))
+                {
+                    addon = *pcur - '0';
+                }
+                else if (INCLOSE('a', *pcur, 'a' - 10 + base))
+                {
+                    addon = *pcur - 'a' + 10;
+                }
+                else if (INCLOSE('A', *pcur, 'A' - 10 + base))
+                {
+                    addon = *pcur - 'A' + 10;
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            num *= (uint32_t)base;
+            num += addon;
+        }
+
+        *ret = num;
+
+        if (pend != NULL)
+        {
+            // return the pointer where it stop
+            *pend = pcur;
+        }
+
+        return *pcur ? CONV_STATE_HALT : CONV_STATE_FULL;
     }
 
-    return NULL;
+    return CONV_STATE_NONE;
 }
 
-// CMD_EXPORT_FUNC(CMD_TYPE(CMD_TYPE_FUNC_MAIN), exec, shellExecute, "execute function undefined");
+arg_type_e shell_parse_arg(shell_t* shell, char* str, uint32_t* ret)
+{
+    char* p = str;
+
+    uint32_t integer  = 0;  // 整数
+    uint32_t decimal  = 0;  // 小数
+    uint32_t exponent = 0;  // 指数
+
+    sign_e int_sign = SIGN_POS;
+    sign_e exp_sign = SIGN_POS;
+
+    switch (*p)
+    {
+        case '0': {
+            switch (*++p)
+            {
+                case 'b':
+                case 'B':  // bin
+                {
+                    if (scan_int(++p, 2, &integer, NULL) == CONV_STATE_FULL)
+                    {
+                        goto _as_int;
+                    }
+
+                    break;
+                }
+
+                case 'x':
+                case 'X':  // hex
+                {
+                    if (scan_int(++p, 16, &integer, NULL) == CONV_STATE_FULL)
+                    {
+                        goto _as_int;
+                    }
+                    break;
+                }
+
+                // float
+                case '.':
+                    goto _chk_flt_pt;
+                case 'e':
+                case 'E':
+                    goto _chk_flt_exp;
+
+                case '0' ... '7':  // oct
+                {
+                    if (scan_int(p, 8, &integer, NULL) == CONV_STATE_FULL)
+                    {
+                        goto _as_int;
+                    }
+
+                    break;
+                }
+
+                default:
+                    break;
+            }
+
+            goto _as_str;
+        }
+
+        case '-':
+            int_sign = SIGN_NEG;
+        case '+':
+        case '1' ... '9': {
+            if (scan_int(p, 10, &integer, &p) == CONV_STATE_FULL)
+            {
+                goto _as_int;
+            }
+
+            if (*p == '.')
+            {
+            _chk_flt_pt:
+                if (scan_int(++p, 10, &decimal, &p) == CONV_STATE_FULL)
+                {
+                    goto _as_flt;
+                }
+            }
+
+            if (*p == 'e' || *p == 'E')
+            {
+            _chk_flt_exp:
+                switch (*++p)
+                {
+                    case '-':
+                        exp_sign = SIGN_NEG;
+                    case '+':
+                        ++p;
+                    case '0' ... '9': {
+                        if (scan_int(p, 10, &exponent, NULL) == CONV_STATE_FULL)
+                        {
+                            if (exp_sign == SIGN_NEG)
+                            {
+                                exponent = -exponent;
+                            }
+
+                            goto _as_flt;
+                        }
+                        break;
+                    }
+                    default:
+                        break;
+                }
+            }
+
+            goto _as_str;
+        }
+
+        case '$': {
+            if (*++p)
+            {
+                // var scan
+                goto _as_var;
+            }
+
+            goto _as_str;
+        }
+
+        default:
+            goto _as_str;
+    }
+
+    //-------------------------------------------------------------------------
+
+    float flt;
+
+_as_str:
+
+    // format it
+    *ret = (uint32_t)str;
+    return TYPE_STRING;
+
+_as_int:
+
+    if (int_sign == SIGN_POS)
+    {
+        *ret = integer;
+        return TYPE_POS_INT;
+    }
+    else
+    {
+        *ret = -integer;
+        return TYPE_NEG_INT;
+    }
+
+_as_flt:
+
+    flt = decimal;
+
+    while (flt > 1)
+    {
+        flt /= 10;
+    }
+
+    flt += integer;
+
+    if (int_sign == SIGN_NEG)
+    {
+        flt = -flt;
+    }
+
+    if (exp_sign == SIGN_POS)
+    {
+        while (exponent--)
+        {
+            flt *= 10;
+
+            if (flt == 0.0f)
+            {
+                break;
+            }
+        }
+    }
+    else
+    {
+        while (exponent--)
+        {
+            flt /= 10;
+
+            if (flt == 0.0f)
+            {
+                break;
+            }
+        }
+    }
+
+    *ret = *(uint32_t*)&flt;
+
+    return TYPE_FLOAT;
+
+_as_var:
+    return TYPE_NEG_INT;
+}
+
+static bool shell_parse_cmd(shell_t* shell)
+{
+    struct {
+        uint8_t inArg   : 1;
+        uint8_t inQuote : 1;
+        uint8_t done    : 1;
+    } state = {0};
+
+    uint16_t i = 0;
+
+    char*    inbuf = shell->parser.buffer;
+    uint16_t len   = shell->parser.length;
+
+    uint16_t argc = 0;
+    char**   argv = shell->parser.argv;
+
+    for (; !state.done & (argc <= CONFIG_SHELL_PARAMETER_MAX_COUNT); ++i)
+    {
+        switch (inbuf[i])
+        {
+            case '\0':  // end
+            {
+                if (state.inQuote)
+                {
+                    goto __error;
+                }
+                state.done = 1;
+                break;
+            }
+
+            case '"':  // str
+            {
+                if (state.inQuote)
+                {
+                    if (state.inArg)
+                    {
+                        // end of string
+                        state.inQuote = 0;
+                        goto __end_arg;
+                    }
+                    else
+                    {
+                        goto __error;
+                    }
+                }
+                else if (!state.inArg)
+                {
+                    // beginning of string arg
+                    state.inArg = state.inQuote = 1;
+                    argv[argc++]                = &inbuf[i + 1];
+                }
+
+                break;
+            }
+
+            case ' ': {
+                if (state.inArg)
+                {
+                    if (!state.inQuote)
+                    {
+                    __end_arg:
+                        state.inArg = 0;
+                        inbuf[i]    = '\0';  // end of arg
+                    }
+                }
+                break;
+            }
+
+            case '\\': {
+                switch (inbuf[i + 1])
+                {
+                    case '"':
+                        // next char isn't a delimiter
+                        inbuf[i] = '"';
+                        break;
+                    case ' ':
+                        // next char isn't a delimiter
+                        inbuf[i] = ' ';
+                        break;
+                    case 'a':
+                        inbuf[i] = '\a';
+                        break;
+                    case 'b':
+                        inbuf[i] = '\b';
+                        break;
+                    case 'r':
+                        inbuf[i] = '\r';
+                        break;
+                    case 'n':
+                        inbuf[i] = '\n';
+                        break;
+                    case 't':
+                        inbuf[i] = '\t';
+                        break;
+                    case '\\':
+                        inbuf[i] = '\\';
+                        break;
+                    case '0': {
+                        inbuf[i--] = '\0';
+                        continue;
+                    }
+                    case '\0':
+                    default: {
+                        continue;
+                    }
+                }
+
+                strcpy(&inbuf[i + 1], &inbuf[i + 2]);
+
+                break;
+            }
+            default: {
+                if (!state.inArg)
+                {
+                    // beginning of arg
+                    state.inArg  = 1;
+                    argv[argc++] = &inbuf[i];
+                }
+                break;
+            }
+        }
+    }
+
+    if (state.inQuote)
+    {
+        goto __error;
+    }
+
+    shell->parser.argc = argc;
+
+    return true;
+
+__error:
+
+    shell->parser.argc = 0;  // ERR_SYNTAX
+
+    for (uint16_t i = shell->parser.argc; i <= CONFIG_SHELL_PARAMETER_MAX_COUNT; i++)
+    {
+        shell->parser.argv[i] = NULL;
+    }
+
+    shell_printf(shell, "syntax error\r\n");
+
+    return false;
+}
+
+// CMD_EXPORT_FUNC(CMD_TYPE(CMD_TYPE_FUNC_MAIN), exec, shellExecute, execute function undefined);
 
 //-----------------------------------------------------------------------------
 // shell format inout
@@ -873,7 +1129,7 @@ void shell_scanf(shell_t* shell, char* fmt, ...)
     {
         if (shell->getc(&buffer[index]))
         {
-            shell->putc(buffer[index]);
+            shell_printf(shell, "%c", buffer[index]);
 
             if (buffer[index] == '\r' ||
                 buffer[index] == '\n')
@@ -906,7 +1162,7 @@ void shell_printf(shell_t* shell, const char* fmt, ...)
     va_list vargs;
 
     va_start(vargs, fmt);
-    uint16_t length = vsnprintf(buffer, sizeof(buffer) - 1, fmt, vargs);
+    uint16_t length = vsnprintf(buffer, CONFIG_SHELL_PRINTF_BUFSIZE, fmt, vargs);
     va_end(vargs);
 
     shell->puts(buffer);
@@ -979,7 +1235,7 @@ void history_swtich(shell_t* shell, dir_e dir)
     {
         strcpy(shell->parser.buffer, shell->history.buffer[(CONFIG_SHELL_HISTROY_MAX_COUNT + shell->history.record + shell->history.offset) % CONFIG_SHELL_HISTROY_MAX_COUNT]);
         shell->parser.cursor = shell->parser.length = strlen(shell->parser.buffer);
-        shell->puts(shell->parser.buffer);
+        shell_printf(shell, shell->parser.buffer);
     }
 }
 
@@ -1010,8 +1266,8 @@ static void shell_show_help(shell_t* shell, int argc, char* argv[])
 
             if (desc != NULL)
             {
-                shell->putc('\n');
                 shell->puts(desc);
+                shell->puts("\r\n");
             }
         }
     }
@@ -1019,10 +1275,7 @@ static void shell_show_help(shell_t* shell, int argc, char* argv[])
 
 void shell_list_cmds(shell_t* shell)
 {
-    shell->putc('\n');
-    shell->puts("Command List:");
-    shell->putc('\n');
-    shell->putc('\n');
+    shell->puts("Command List:\r\n");
 
     cmd_t* base = (cmd_t*)shell->cmds.base;
 
@@ -1037,10 +1290,7 @@ void shell_list_cmds(shell_t* shell)
 
 void shell_list_vars(shell_t* shell)
 {
-    shell->putc('\n');
-    shell->puts("Variable List:");
-    shell->putc('\n');
-    shell->putc('\n');
+    shell->puts("Variable List:\r\n");
 
     cmd_t* base = (cmd_t*)shell->cmds.base;
 
@@ -1053,40 +1303,45 @@ void shell_list_vars(shell_t* shell)
     }
 }
 
-void shell_list_keys(shell_t* shell)
-{
-    shell->putc('\n');
-    shell->puts("Key List:");
-    shell->putc('\n\n');
-
-    cmd_t* base = (cmd_t*)shell->cmds.base;
-
-    for (uint16_t i = 0; i < shell->cmds.count; i++)
-    {
-        if (base[i].attr.bits.type == CMD_TYPE_KEY)
-        {
-            shell_show_cmd(shell, &base[i]);
-        }
-    }
-}
-
 void shell_show_history(shell_t* shell)
 {
     for (uint16_t i = 0; i < shell->history.count; ++i)
     {
         shell->puts(shell->history.buffer[i]);
-        shell->putc('\n');
+        shell->puts("\r\n");
     }
 }
 
-CMD_EXPORT_FUNC(CMD_TYPE(CMD_TYPE_FUNC_C), cmds, shell_list_cmds, "list all cmd")
-CMD_EXPORT_FUNC(CMD_TYPE(CMD_TYPE_FUNC_C), vars, shell_list_vars, "list all var")
-CMD_EXPORT_FUNC(CMD_TYPE(CMD_TYPE_FUNC_C), keys, shell_list_keys, "list all key")
-CMD_EXPORT_FUNC(CMD_TYPE(CMD_TYPE_FUNC_MAIN), help, shell_show_help, "show command info");
-CMD_EXPORT_FUNC(CMD_TYPE(CMD_TYPE_FUNC_C), history, shell_show_history, "show history")
+CMD_EXPORT_FUNC(CMD_TYPE(CMD_TYPE_FUNC_C), cmds, shell_list_cmds, list all cmd)
+CMD_EXPORT_FUNC(CMD_TYPE(CMD_TYPE_FUNC_C), vars, shell_list_vars, list all var)
+CMD_EXPORT_FUNC(CMD_TYPE(CMD_TYPE_FUNC_MAIN), help, shell_show_help, show command info);
+CMD_EXPORT_FUNC(CMD_TYPE(CMD_TYPE_FUNC_C), history, shell_show_history, show history)
+
+static void shell_echo(shell_t* shell, int argc, char* argv[])
+{
+    if (argc >= 2)
+    {
+        shell_printf(shell, argv[1]);
+        shell_printf(shell, "\r\n");
+    }
+}
+
+CMD_EXPORT_FUNC(CMD_TYPE(CMD_TYPE_FUNC_MAIN), echo, shell_echo, echo)
 
 //-----------------------------------------------------------------------------
-// console helper
+// console key handler
+
+/*
+ *  Key Binding   Editor Action
+ *     Ctrl A     Move cursor to start of the line
+ *     Ctrl B     Move left one character
+ *     Ctrl D     Delete a single character at the cursor position
+ *     Ctrl E     Move cursor to end of current line
+ *     Ctrl F     Move right one character
+ *     Ctrl H     Delete character, left
+ *     Ctrl K     Delete to the end of the line
+ *     Ctrl U     Delete the entire line
+ */
 
 static void console_delete_char(shell_t* shell)
 {
@@ -1101,33 +1356,49 @@ static void console_delete_chars(shell_t* shell, uint16_t size)
     }
 }
 
+static void console_clear_line(shell_t* shell)
+{
+    // delete the entire line
+    shell->puts("\33[2K\r");
+    shell->parser.buffer[shell->parser.length = shell->parser.cursor = 0] = '\0';
+    shell_show_prompt(shell);
+}
+CMD_EXPORT_KEY(0, 0x15000000, console_clear_line, clear line);  // Ctrl+U
+
 static void console_clear_screen(shell_t* shell)
 {
     shell->puts("\e[2J\e[1H");
 }
+CMD_EXPORT_FUNC(CMD_TYPE(CMD_TYPE_FUNC_C) | CMD_FUNC_ARGC(0), cls, console_clear_screen, clear console);
+CMD_EXPORT_FUNC(CMD_TYPE(CMD_TYPE_FUNC_C) | CMD_FUNC_ARGC(0), clear, console_clear_screen, clear console);
 
-static void console_clear_line(shell_t* shell)
+static void console_cursor_delete_to_end(shell_t* shell, uint16_t distance)
 {
-    uint16_t n = shell->parser.length - shell->parser.cursor;
+    // Delete to the end of the line
 
-    while (n--)
+    if (shell->parser.cursor < shell->parser.length)
     {
-        shell->putc(' ');
+        uint16_t i;
+
+        for (i = shell->parser.cursor; i < shell->parser.length; i++)
+        {
+            shell->puts(" ");
+        }
+        for (i = shell->parser.cursor; i < shell->parser.length; i++)
+        {
+            shell->puts("\b");
+        }
+
+        shell->parser.buffer[shell->parser.length = shell->parser.cursor] = '\0';
     }
-
-    console_delete_chars(shell, shell->parser.length);
 }
-
-CMD_EXPORT_FUNC(CMD_TYPE(CMD_TYPE_FUNC_C) | CMD_ARGC(0), cls, console_clear_screen, "clear console");
-CMD_EXPORT_FUNC(CMD_TYPE(CMD_TYPE_FUNC_C) | CMD_ARGC(0), clear, console_clear_screen, "clear console");
-
-//-----------------------------------------------------------------------------
-// console key handler
+CMD_EXPORT_KEY(0, 0x0B000000, console_cursor_delete_to_end, delete to the end of the line);  // Ctrl+K
 
 static void console_key_tab(shell_t* shell)
 {
     if (shell->parser.length == 0)
     {
+        shell->puts("\r\n");
         shell_list_all(shell);
         shell_show_prompt(shell);
     }
@@ -1148,7 +1419,7 @@ static void console_key_tab(shell_t* shell)
                 {
                     if (++nMatchedCount == 1)
                     {
-                        shell->putc('\n');
+                        shell->puts("\r\n");
                     }
 
                     nLastMacthedIndex = i;
@@ -1172,49 +1443,74 @@ static void console_key_tab(shell_t* shell)
         shell->puts(shell->parser.buffer);
     }
 }
-CMD_EXPORT_KEY(0, 0x09000000, console_key_tab, "tab");  // '\t'
+CMD_EXPORT_KEY(0, 0x09000000, console_key_tab, tab);  // '\t'
 
 static void console_key_delete(shell_t* shell)
 {
+    // delete a single character at the cursor position
     shell_remove_byte(shell, DEL_CURR);
 }
-CMD_EXPORT_KEY(0, 0x1B5B337E, console_key_delete, "delete");
+CMD_EXPORT_KEY(0, 0x1B5B337E, console_key_delete, delete);  // Delete
+CMD_EXPORT_KEY(0, 0x04000000, console_key_delete, delete);  // Ctrl+D
 
 static void console_key_backspace(shell_t* shell)
 {
     shell_remove_byte(shell, DEL_PREV);
 }
-CMD_EXPORT_KEY(0, 0x08000000, console_key_backspace, "backspace");
-CMD_EXPORT_KEY(0, 0x7F000000, console_key_backspace, "backspace");
+CMD_EXPORT_KEY(0, 0x08000000, console_key_backspace, backspace);  // Backspace
+CMD_EXPORT_KEY(0, 0x7F000000, console_key_backspace, backspace);  // Ctrl+H
 
 static void console_key_enter(shell_t* shell)
 {
     shell_exec(shell);
-    shell->putc('\n');
     shell_show_prompt(shell);
 }
-CMD_EXPORT_KEY(0, 0x0A000000, console_key_enter, "enter");  // SHELL_ENTER_LF, '\r'
-CMD_EXPORT_KEY(0, 0x0D000000, console_key_enter, "enter");  // SHELL_ENTER_CR, '\n'
-CMD_EXPORT_KEY(0, 0x0D0A0000, console_key_enter, "enter");  // SHELL_ENTER_CRLF, '\r\n'
+CMD_EXPORT_KEY(0, 0x0A000000, console_key_enter, enter);  // ENTER_LF, '\r'
+CMD_EXPORT_KEY(0, 0x0D000000, console_key_enter, enter);  // ENTER_CR, '\n'
+CMD_EXPORT_KEY(0, 0x0D0A0000, console_key_enter, enter);  // ENTER_CRLF, '\r\n'
 
 static void console_key_letf_arrow(shell_t* shell)
 {
     if (shell->parser.cursor > 0)
     {
         shell->parser.cursor--;
-        shell->putc('\b');
+        shell->puts("\b");
     }
 }
-CMD_EXPORT_KEY(0, 0x1B5B4400, console_key_letf_arrow, "left");  // '\e[D'
+CMD_EXPORT_KEY(0, 0x1B5B4400, console_key_letf_arrow, left);  // '\e[D'
+CMD_EXPORT_KEY(0, 0x02000000, console_key_letf_arrow, left);  // Ctrl+B
 
 static void console_key_right_arrow(shell_t* shell)
 {
     if (shell->parser.cursor < shell->parser.length)
     {
-        shell->putc(shell->parser.buffer[shell->parser.cursor++]);
+        shell_printf(shell, "%c", shell->parser.buffer[shell->parser.cursor++]);
     }
 }
-CMD_EXPORT_KEY(0, 0x1B5B4300, console_key_right_arrow, "right");  // '\e[C'
+CMD_EXPORT_KEY(0, 0x1B5B4300, console_key_right_arrow, right);  // '\e[C'
+CMD_EXPORT_KEY(0, 0x06000000, console_key_right_arrow, right);  // Ctrl+F
+
+static void console_cursor_move_begin(shell_t* shell)
+{
+    // Move cursor to start of the line
+    while (shell->parser.cursor)
+    {
+        shell->puts("\b");
+        shell->parser.cursor--;
+    }
+}
+CMD_EXPORT_KEY(0, 0x01000000, console_cursor_move_begin, move cursor to start of the line);  // Ctrl+A
+
+static void console_cursor_move_end(shell_t* shell, uint16_t distance)
+{
+    // Move cursor to end of the line
+    if (shell->parser.cursor < shell->parser.length)
+    {
+        shell->puts(&shell->parser.buffer[shell->parser.cursor]);
+        shell->parser.cursor = shell->parser.length;
+    }
+}
+CMD_EXPORT_KEY(0, 0x05000000, console_cursor_move_end, move cursor to end of the line);  // Ctrl+E
 
 #if CONFIG_SHELL_HISTROY_MAX_COUNT > 0
 
@@ -1222,76 +1518,14 @@ static void console_key_up_arrow(shell_t* shell)
 {
     history_swtich(shell, DIR_PREV);
 }
-CMD_EXPORT_KEY(0, 0x1B5B4100, console_key_up_arrow, "up");  // '\e[A'
+CMD_EXPORT_KEY(0, 0x1B5B4100, console_key_up_arrow, up);  // '\e[A'
 
 static void console_key_down_arrow(shell_t* shell)
 {
     history_swtich(shell, DIR_NEXT);
 }
-CMD_EXPORT_KEY(0, 0x1B5B4200, console_key_down_arrow, "down");  // '\e[B'
+CMD_EXPORT_KEY(0, 0x1B5B4200, console_key_down_arrow, down);  // '\e[B'
 
 #endif
 
 //
-
-int base_conv(shell_t* shell, uint32_t number)
-{
-    char buffer[34] = {0};
-
-    ltoa(number, buffer, 2);
-    shell_printf(shell, "BIN: 0b%s\n", buffer);
-    shell_printf(shell, "OCT: 0%o\n", number);
-    shell_printf(shell, "DEC: %d\n", number);
-    shell_printf(shell, "HEX: 0x%X\n", number);
-    shell_printf(shell, "BCD: %d\n", dec2bcd(number));
-
-    return 0;
-}
-
-CMD_EXPORT_FUNC(CMD_TYPE(CMD_TYPE_FUNC_C) | CMD_ARGC(1), base, base_conv, "number base conversion");
-
-//
-
-int print_ascii_table(shell_t* shell, int argc, char* argv[])
-{
-    /* prints out a basic ASCII table */
-    /* dec, hex, char, octal, description */
-
-    static const char desc[128][15] = {"null", "SOH", "STX", "ETX", "EOT", "ENQ", "ACK", "BEL", "BS", "HT", "LF", "VT", "FF", "CR", "SO", "SI", "DLE", "DC1", "DC2", "DC3", "DC4", "NAK", "SYN", "ETB", "CAN", "EM", "SUB", "ESC", "FS", "GS", "RS", "US", "space", "!", "\"", "#", "$", "%", "&", "'", "(", ")", "*", "+", ",", "-", ".", "/", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", ":", ";", "<", "=", ">", "?", "@", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "[", "~", "]", "^", "_", "`", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "{", "|", "}", "~", "DEL"};
-
-    uint8_t start;
-    uint8_t count = 0;
-
-    if (argc == 1)
-    {
-        start = 0;
-        count = 128;
-    }
-    else if (argc == 2)
-    {
-        int n = atoi(argv[1]);
-
-        if (0 <= n && n <= 127)
-        {
-            start = n;
-            count = 1;
-        }
-    }
-
-    if (count == 0)
-    {
-        return -1;
-    }
-
-    shell->puts("dec\t hex\t char\t oct\t desc\n");
-    shell->puts("===\t ===\t ====\t ===\t ====\n");
-
-    for (int i = start; i < (start + count); i++)
-    {
-        shell_printf(shell, "%d\t %x\t %c\t %o\t %s\r\n", i, i, i <= 32 ? ' ' : i, i, desc[i]);
-    }
-
-    return 0;
-}
-
-CMD_EXPORT_FUNC(CMD_TYPE(CMD_TYPE_FUNC_MAIN), ascii, print_ascii_table, "display ascii table");

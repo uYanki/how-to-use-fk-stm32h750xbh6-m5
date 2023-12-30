@@ -65,6 +65,16 @@ typedef enum {
 #define shell_info(fmt, ...)    shell_printf(shell_get(), FONT_COLO_LIGHTBLUE fmt FONT_COLO_WHITE, ##__VA_ARGS__)
 #define shell_warning(fmt, ...) shell_printf(shell_get(), FONT_COLO_YELLOW fmt FONT_COLO_WHITE, ##__VA_ARGS__)
 
+//
+
+#define B_LEN_CMD_ATTR_ACCESS   3
+#define B_LEN_CMD_ATTR_TYPE     5
+#define B_LEN_CMD_ATTR_EXT      8
+
+#define B_STB_CMD_ATTR_ACCESS   0
+#define B_STB_CMD_ATTR_TYPE     (B_STB_CMD_ATTR_ACCESS + B_LEN_CMD_ATTR_ACCESS)
+#define B_STB_CMD_ATTR_EXT      (B_STB_CMD_ATTR_TYPE + B_LEN_CMD_ATTR_TYPE)
+
 typedef struct cmd   cmd_t;
 typedef struct shell shell_t;
 
@@ -96,10 +106,12 @@ struct cmd {
     const union {
         uint32_t all;
         struct {
-            uint8_t    access : 3;
-            cmd_type_t type   : 5;
-            uint8_t    argc   : 4;  // func
-            cmd_rw_t   rw     : 2;  // var
+            uint32_t   access : B_LEN_CMD_ATTR_ACCESS;
+            cmd_type_t type : B_LEN_CMD_ATTR_TYPE;
+            union {
+                uint8_t  argc : B_LEN_CMD_ATTR_EXT;  // func
+                cmd_rw_t rw : B_LEN_CMD_ATTR_EXT;    // var
+            } ext;
         } bits;
     } attr;
 };
@@ -111,6 +123,11 @@ struct shell {
         cmd_t*   base;
         uint16_t count;
     } cmds;
+
+    struct {
+        cmd_t*   base;
+        uint16_t count;
+    } keys;  // hotkey
 
     struct {
         char*    buffer;
@@ -139,24 +156,13 @@ struct shell {
 #endif
 
     bool (*getc)(char*);
-    void (*putc)(char);
     int (*puts)(char*);
 };
 
-#define B_LEN_CMD_ATTR_ACCESS 3
-#define B_LEN_CMD_ATTR_TYPE   5
-#define B_LEN_CMD_ATTR_ARGC   4
-#define B_LEN_CMD_ATTR_RW     3
-
-#define B_STB_CMD_ATTR_ACCESS 0
-#define B_STB_CMD_ATTR_TYPE   (B_STB_CMD_ATTR_ACCESS + B_LEN_CMD_ATTR_ACCESS)
-#define B_STB_CMD_ATTR_ARGC   (B_STB_CMD_ATTR_TYPE + B_LEN_CMD_ATTR_TYPE)
-#define B_STB_CMD_ATTR_RW     (B_STB_CMD_ATTR_ARGC + B_LEN_CMD_ATTR_ARGC)
-
-#define CMD_ACCESS(n)         ((uint32_t)(n) << B_STB_CMD_ATTR_ACCESS)
-#define CMD_TYPE(n)           ((uint32_t)(n) << B_STB_CMD_ATTR_TYPE)
-#define CMD_ARGC(n)           ((uint32_t)(n) << B_STB_CMD_ATTR_ARGC)
-#define CMD_RW(n)             ((uint32_t)(n) << B_STB_CMD_ATTR_RW)
+#define CMD_ACCESS(n)    ((uint32_t)(n) << B_STB_CMD_ATTR_ACCESS)
+#define CMD_TYPE(n)      ((uint32_t)(n) << B_STB_CMD_ATTR_TYPE)
+#define CMD_FUNC_ARGC(n) ((uint32_t)(n) << B_LEN_CMD_ATTR_EXT)
+#define CMD_VAR_RW(n)    ((uint32_t)(n) << B_LEN_CMD_ATTR_EXT)
 
 #define CMD_EXPORT_FUNC(_attr, _name, _cbk, _desc)  \
     static const char _cmd_name_##_name[] = #_name; \
@@ -169,20 +175,20 @@ struct shell {
         .func.desc = _cmd_desc_##_name,             \
     };
 
-#define CMD_EXPORT_VAR(_attr, _name, _cbk, _desc)   \
+#define CMD_EXPORT_VAR(_attr, _name, _addr, _desc)  \
     static const char _cmd_name_##_name[] = #_name; \
     static const char _cmd_desc_##_name[] = #_desc; \
     __SECTION("CMDS")                               \
     __USED static cmd_t _cmd_##_name = {            \
         .attr.all = _attr,                          \
         .var.name = _cmd_name_##_name,              \
-        .var.cbk  = (cmd_cbk_t)_cbk,                \
+        .var.addr = (void*)_addr,                   \
         .var.desc = _cmd_desc_##_name,              \
     };
 
 #define CMD_EXPORT_KEY(_attr, _key, _cbk, _desc)     \
     static const char _cmd_desc_##_key[] = #_desc;   \
-    __SECTION("CMDS")                                \
+    __SECTION("KEYS")                                \
     __USED static cmd_t _cmd_##_key = {              \
         .attr.all  = _attr | CMD_TYPE(CMD_TYPE_KEY), \
         .key.value = _key,                           \
@@ -197,7 +203,8 @@ void shell_printf(shell_t* shell, const char* fmt, ...);
 
 void shell_list_cmds(shell_t* shell);
 void shell_list_vars(shell_t* shell);
-void shell_list_keys(shell_t* shell);
 void shell_list_all(shell_t* shell);
+
+void shell_log(shell_t* shell, char* buffer);
 
 #endif

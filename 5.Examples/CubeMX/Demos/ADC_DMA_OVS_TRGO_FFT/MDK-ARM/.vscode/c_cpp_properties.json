@@ -5,10 +5,10 @@
             "includePath": [
                 "f:\\how-to-use-fk-stm32h750xbh6-m4\\5.Examples\\CubeMX\\Demos\\ADC_DMA_OVS_TRGO_FFT\\Core\\Inc",
                 "f:\\how-to-use-fk-stm32h750xbh6-m4\\5.Examples\\CubeMX\\Board",
-                "C:\\Users\\uYanki\\STM32Cube\\Repository\\STM32Cube_FW_H7_V1.11.1\\Drivers\\STM32H7xx_HAL_Driver\\Inc",
-                "C:\\Users\\uYanki\\STM32Cube\\Repository\\STM32Cube_FW_H7_V1.11.1\\Drivers\\STM32H7xx_HAL_Driver\\Inc\\Legacy",
-                "C:\\Users\\uYanki\\STM32Cube\\Repository\\STM32Cube_FW_H7_V1.11.1\\Drivers\\CMSIS\\Device\\ST\\STM32H7xx\\Include",
-                "C:\\Users\\uYanki\\STM32Cube\\Repository\\STM32Cube_FW_H7_V1.11.1\\Drivers\\CMSIS\\Include",
+                "C:\\Users\\uYanki\\STM32Cube\\Repository\\STM32Cube_FW_H7_V1.11.0\\Drivers\\STM32H7xx_HAL_Driver\\Inc",
+                "C:\\Users\\uYanki\\STM32Cube\\Repository\\STM32Cube_FW_H7_V1.11.0\\Drivers\\STM32H7xx_HAL_Driver\\Inc\\Legacy",
+                "C:\\Users\\uYanki\\STM32Cube\\Repository\\STM32Cube_FW_H7_V1.11.0\\Drivers\\CMSIS\\Device\\ST\\STM32H7xx\\Include",
+                "C:\\Users\\uYanki\\STM32Cube\\Repository\\STM32Cube_FW_H7_V1.11.0\\Drivers\\CMSIS\\Include",
                 "C:\\Users\\uYanki\\AppData\\Local\\Arm\\Packs\\ARM\\CMSIS\\5.8.0\\CMSIS\\DSP\\Include",
                 "C:\\Keil_v5\\ARM\\ARMCLANG\\include",
                 "C:\\Keil_v5\\ARM\\ARMCLANG\\include\\arm_linux",
@@ -20,7 +20,7 @@
                 "f:\\how-to-use-fk-stm32h750xbh6-m4\\5.Examples\\CubeMX\\Board\\pinctrl",
                 "f:\\how-to-use-fk-stm32h750xbh6-m4\\5.Examples\\CubeMX\\Board\\serial",
                 "f:\\how-to-use-fk-stm32h750xbh6-m4\\5.Examples\\CubeMX\\Board\\analog",
-                "C:\\Users\\uYanki\\STM32Cube\\Repository\\STM32Cube_FW_H7_V1.11.1\\Drivers\\STM32H7xx_HAL_Driver\\Src"
+                "C:\\Users\\uYanki\\STM32Cube\\Repository\\STM32Cube_FW_H7_V1.11.0\\Drivers\\STM32H7xx_HAL_Driver\\Src"
             ],
             "defines": [
                 "USE_HAL_DRIVER",

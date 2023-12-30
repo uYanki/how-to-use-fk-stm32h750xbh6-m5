@@ -46,14 +46,7 @@
 
 /* USER CODE BEGIN PV */
 
-//static int show_history(int argc, char** argv)
-//{
-//    shell_show_history(&shell);
-
-//    return 0;
-//}
-
-//CMD_EXPORT(history, "Show command history", show_history);
+// CMD_EXPORT(history, "Show command history", show_history);
 
 /* USER CODE END PV */
 
@@ -102,7 +95,10 @@ int blink(shell_t* shell, int argc, char** argv)
     return 0;
 }
 
-CMD_EXPORT_FUNC(CMD_TYPE(CMD_TYPE_FUNC_MAIN), led, blink, "led control")
+CMD_EXPORT_FUNC(CMD_TYPE(CMD_TYPE_FUNC_MAIN), led, blink, led control)
+
+int8_t m_log = 0;
+CMD_EXPORT_VAR(CMD_TYPE(CMD_TYPE_VAR_INT8) | CMD_VAR_RW(CMD_RW), log, &m_log, say hello world)
 
 /* USER CODE END 0 */
 
@@ -148,6 +144,12 @@ int main(void)
     while (1)
     {
         shell_task();
+
+        if (m_log)
+        {
+            m_log = 0;
+            shell_log(shell_get(), "hello world\n");
+        }
 
         /* USER CODE END WHILE */
 

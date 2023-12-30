@@ -157,9 +157,9 @@
         <Bp>
           <Number>0</Number>
           <Type>0</Type>
-          <LineNumber>1145</LineNumber>
+          <LineNumber>760</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>134233174</Address>
+          <Address>134234804</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
@@ -168,7 +168,7 @@
           <BreakIfRCount>1</BreakIfRCount>
           <Filename>..\Libraries\Shell\core.c</Filename>
           <ExecCommand></ExecCommand>
-          <Expression>\\demo\../Libraries/Shell/core.c\1145</Expression>
+          <Expression>\\demo\../Libraries/Shell/core.c\760</Expression>
         </Bp>
       </Breakpoint>
       <WatchWindow1>
@@ -420,7 +420,7 @@
   </Group>
 
   <Group>
-    <GroupName>Libraries/Shell</GroupName>
+    <GroupName>Libraries/Shell/Core</GroupName>
     <tvExp>1</tvExp>
     <tvExpOptDlg>0</tvExpOptDlg>
     <cbSel>0</cbSel>
@@ -488,7 +488,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>C:/Users/uYanki/STM32Cube/Repository/STM32Cube_FW_H7_V1.11.1/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_cortex.c</PathWithFileName>
+      <PathWithFileName>C:/Users/Administrator/STM32Cube/Repository/STM32Cube_FW_H7_V1.11.0/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_cortex.c</PathWithFileName>
       <FilenameWithoutPath>stm32h7xx_hal_cortex.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
@@ -500,7 +500,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>C:/Users/uYanki/STM32Cube/Repository/STM32Cube_FW_H7_V1.11.1/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_rcc.c</PathWithFileName>
+      <PathWithFileName>C:/Users/Administrator/STM32Cube/Repository/STM32Cube_FW_H7_V1.11.0/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_rcc.c</PathWithFileName>
       <FilenameWithoutPath>stm32h7xx_hal_rcc.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
@@ -512,7 +512,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>C:/Users/uYanki/STM32Cube/Repository/STM32Cube_FW_H7_V1.11.1/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_rcc_ex.c</PathWithFileName>
+      <PathWithFileName>C:/Users/Administrator/STM32Cube/Repository/STM32Cube_FW_H7_V1.11.0/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_rcc_ex.c</PathWithFileName>
       <FilenameWithoutPath>stm32h7xx_hal_rcc_ex.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
@@ -524,7 +524,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>C:/Users/uYanki/STM32Cube/Repository/STM32Cube_FW_H7_V1.11.1/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_flash.c</PathWithFileName>
+      <PathWithFileName>C:/Users/Administrator/STM32Cube/Repository/STM32Cube_FW_H7_V1.11.0/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_flash.c</PathWithFileName>
       <FilenameWithoutPath>stm32h7xx_hal_flash.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
@@ -536,7 +536,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>C:/Users/uYanki/STM32Cube/Repository/STM32Cube_FW_H7_V1.11.1/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_flash_ex.c</PathWithFileName>
+      <PathWithFileName>C:/Users/Administrator/STM32Cube/Repository/STM32Cube_FW_H7_V1.11.0/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_flash_ex.c</PathWithFileName>
       <FilenameWithoutPath>stm32h7xx_hal_flash_ex.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
@@ -548,7 +548,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>C:/Users/uYanki/STM32Cube/Repository/STM32Cube_FW_H7_V1.11.1/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_gpio.c</PathWithFileName>
+      <PathWithFileName>C:/Users/Administrator/STM32Cube/Repository/STM32Cube_FW_H7_V1.11.0/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_gpio.c</PathWithFileName>
       <FilenameWithoutPath>stm32h7xx_hal_gpio.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
@@ -560,7 +560,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>C:/Users/uYanki/STM32Cube/Repository/STM32Cube_FW_H7_V1.11.1/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_hsem.c</PathWithFileName>
+      <PathWithFileName>C:/Users/Administrator/STM32Cube/Repository/STM32Cube_FW_H7_V1.11.0/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_hsem.c</PathWithFileName>
       <FilenameWithoutPath>stm32h7xx_hal_hsem.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
@@ -572,7 +572,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>C:/Users/uYanki/STM32Cube/Repository/STM32Cube_FW_H7_V1.11.1/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_dma.c</PathWithFileName>
+      <PathWithFileName>C:/Users/Administrator/STM32Cube/Repository/STM32Cube_FW_H7_V1.11.0/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_dma.c</PathWithFileName>
       <FilenameWithoutPath>stm32h7xx_hal_dma.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
@@ -584,7 +584,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>C:/Users/uYanki/STM32Cube/Repository/STM32Cube_FW_H7_V1.11.1/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_dma_ex.c</PathWithFileName>
+      <PathWithFileName>C:/Users/Administrator/STM32Cube/Repository/STM32Cube_FW_H7_V1.11.0/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_dma_ex.c</PathWithFileName>
       <FilenameWithoutPath>stm32h7xx_hal_dma_ex.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
@@ -596,7 +596,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>C:/Users/uYanki/STM32Cube/Repository/STM32Cube_FW_H7_V1.11.1/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_mdma.c</PathWithFileName>
+      <PathWithFileName>C:/Users/Administrator/STM32Cube/Repository/STM32Cube_FW_H7_V1.11.0/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_mdma.c</PathWithFileName>
       <FilenameWithoutPath>stm32h7xx_hal_mdma.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
@@ -608,7 +608,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>C:/Users/uYanki/STM32Cube/Repository/STM32Cube_FW_H7_V1.11.1/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_pwr.c</PathWithFileName>
+      <PathWithFileName>C:/Users/Administrator/STM32Cube/Repository/STM32Cube_FW_H7_V1.11.0/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_pwr.c</PathWithFileName>
       <FilenameWithoutPath>stm32h7xx_hal_pwr.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
@@ -620,7 +620,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>C:/Users/uYanki/STM32Cube/Repository/STM32Cube_FW_H7_V1.11.1/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_pwr_ex.c</PathWithFileName>
+      <PathWithFileName>C:/Users/Administrator/STM32Cube/Repository/STM32Cube_FW_H7_V1.11.0/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_pwr_ex.c</PathWithFileName>
       <FilenameWithoutPath>stm32h7xx_hal_pwr_ex.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
@@ -632,7 +632,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>C:/Users/uYanki/STM32Cube/Repository/STM32Cube_FW_H7_V1.11.1/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal.c</PathWithFileName>
+      <PathWithFileName>C:/Users/Administrator/STM32Cube/Repository/STM32Cube_FW_H7_V1.11.0/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal.c</PathWithFileName>
       <FilenameWithoutPath>stm32h7xx_hal.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
@@ -644,7 +644,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>C:/Users/uYanki/STM32Cube/Repository/STM32Cube_FW_H7_V1.11.1/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_i2c.c</PathWithFileName>
+      <PathWithFileName>C:/Users/Administrator/STM32Cube/Repository/STM32Cube_FW_H7_V1.11.0/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_i2c.c</PathWithFileName>
       <FilenameWithoutPath>stm32h7xx_hal_i2c.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
@@ -656,7 +656,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>C:/Users/uYanki/STM32Cube/Repository/STM32Cube_FW_H7_V1.11.1/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_i2c_ex.c</PathWithFileName>
+      <PathWithFileName>C:/Users/Administrator/STM32Cube/Repository/STM32Cube_FW_H7_V1.11.0/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_i2c_ex.c</PathWithFileName>
       <FilenameWithoutPath>stm32h7xx_hal_i2c_ex.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
@@ -668,7 +668,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>C:/Users/uYanki/STM32Cube/Repository/STM32Cube_FW_H7_V1.11.1/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_exti.c</PathWithFileName>
+      <PathWithFileName>C:/Users/Administrator/STM32Cube/Repository/STM32Cube_FW_H7_V1.11.0/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_exti.c</PathWithFileName>
       <FilenameWithoutPath>stm32h7xx_hal_exti.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
@@ -680,7 +680,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>C:/Users/uYanki/STM32Cube/Repository/STM32Cube_FW_H7_V1.11.1/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_tim.c</PathWithFileName>
+      <PathWithFileName>C:/Users/Administrator/STM32Cube/Repository/STM32Cube_FW_H7_V1.11.0/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_tim.c</PathWithFileName>
       <FilenameWithoutPath>stm32h7xx_hal_tim.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
@@ -692,7 +692,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>C:/Users/uYanki/STM32Cube/Repository/STM32Cube_FW_H7_V1.11.1/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_tim_ex.c</PathWithFileName>
+      <PathWithFileName>C:/Users/Administrator/STM32Cube/Repository/STM32Cube_FW_H7_V1.11.0/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_tim_ex.c</PathWithFileName>
       <FilenameWithoutPath>stm32h7xx_hal_tim_ex.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
@@ -704,7 +704,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>C:/Users/uYanki/STM32Cube/Repository/STM32Cube_FW_H7_V1.11.1/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_uart.c</PathWithFileName>
+      <PathWithFileName>C:/Users/Administrator/STM32Cube/Repository/STM32Cube_FW_H7_V1.11.0/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_uart.c</PathWithFileName>
       <FilenameWithoutPath>stm32h7xx_hal_uart.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
@@ -716,8 +716,76 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>C:/Users/uYanki/STM32Cube/Repository/STM32Cube_FW_H7_V1.11.1/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_uart_ex.c</PathWithFileName>
+      <PathWithFileName>C:/Users/Administrator/STM32Cube/Repository/STM32Cube_FW_H7_V1.11.0/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_uart_ex.c</PathWithFileName>
       <FilenameWithoutPath>stm32h7xx_hal_uart_ex.c</FilenameWithoutPath>
+      <RteFlg>0</RteFlg>
+      <bShared>0</bShared>
+    </File>
+  </Group>
+
+  <Group>
+    <GroupName>Libraries/Shell/Ext</GroupName>
+    <tvExp>1</tvExp>
+    <tvExpOptDlg>0</tvExpOptDlg>
+    <cbSel>0</cbSel>
+    <RteFlg>0</RteFlg>
+    <File>
+      <GroupNumber>8</GroupNumber>
+      <FileNumber>37</FileNumber>
+      <FileType>1</FileType>
+      <tvExp>0</tvExp>
+      <tvExpOptDlg>0</tvExpOptDlg>
+      <bDave2>0</bDave2>
+      <PathWithFileName>..\Libraries\Shell\ext\canopen.c</PathWithFileName>
+      <FilenameWithoutPath>canopen.c</FilenameWithoutPath>
+      <RteFlg>0</RteFlg>
+      <bShared>0</bShared>
+    </File>
+    <File>
+      <GroupNumber>8</GroupNumber>
+      <FileNumber>38</FileNumber>
+      <FileType>1</FileType>
+      <tvExp>0</tvExp>
+      <tvExpOptDlg>0</tvExpOptDlg>
+      <bDave2>0</bDave2>
+      <PathWithFileName>..\Libraries\Shell\ext\memory.c</PathWithFileName>
+      <FilenameWithoutPath>memory.c</FilenameWithoutPath>
+      <RteFlg>0</RteFlg>
+      <bShared>0</bShared>
+    </File>
+    <File>
+      <GroupNumber>8</GroupNumber>
+      <FileNumber>39</FileNumber>
+      <FileType>1</FileType>
+      <tvExp>0</tvExp>
+      <tvExpOptDlg>0</tvExpOptDlg>
+      <bDave2>0</bDave2>
+      <PathWithFileName>..\Libraries\Shell\ext\modbus.c</PathWithFileName>
+      <FilenameWithoutPath>modbus.c</FilenameWithoutPath>
+      <RteFlg>0</RteFlg>
+      <bShared>0</bShared>
+    </File>
+    <File>
+      <GroupNumber>8</GroupNumber>
+      <FileNumber>40</FileNumber>
+      <FileType>1</FileType>
+      <tvExp>0</tvExp>
+      <tvExpOptDlg>0</tvExpOptDlg>
+      <bDave2>0</bDave2>
+      <PathWithFileName>..\Libraries\Shell\ext\numbase.c</PathWithFileName>
+      <FilenameWithoutPath>numbase.c</FilenameWithoutPath>
+      <RteFlg>0</RteFlg>
+      <bShared>0</bShared>
+    </File>
+    <File>
+      <GroupNumber>8</GroupNumber>
+      <FileNumber>41</FileNumber>
+      <FileType>1</FileType>
+      <tvExp>0</tvExp>
+      <tvExpOptDlg>0</tvExpOptDlg>
+      <bDave2>0</bDave2>
+      <PathWithFileName>..\Libraries\Shell\ext\system.c</PathWithFileName>
+      <FilenameWithoutPath>system.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>

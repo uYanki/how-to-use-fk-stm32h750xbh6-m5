@@ -6,8 +6,7 @@
 
 int shell_puts(char* str)
 {
-    // HAL_UART_Transmit(&huart1,(uint8_t*) str,strlen(str),0xFF) ;
-    return printf("%s", str);
+    HAL_UART_Transmit(&huart1,(uint8_t*) str,strlen(str),0xFF) ;
 }
 
 bool shell_getc(char* c)
@@ -15,21 +14,9 @@ bool shell_getc(char* c)
     return HAL_UART_Receive(&huart1, (uint8_t*)c, 1, 0xFF) == HAL_OK;
 }
 
-void shell_putc(char c)
-{
-    if (c == '\n')
-    {
-        char ch = '\r';
-        HAL_UART_Transmit(&huart1, (uint8_t*)&ch, 1, 0xFF);
-    }
-
-    HAL_UART_Transmit(&huart1, (uint8_t*)&c, 1, 0xFF);
-}
-
 static shell_t shell = {
     .prompt = "uYanki@root: ",
     .getc   = shell_getc,
-    .putc   = shell_putc,
     .puts   = shell_puts,
 };
 
