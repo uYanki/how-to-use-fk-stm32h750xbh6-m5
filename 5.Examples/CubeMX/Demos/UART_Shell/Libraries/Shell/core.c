@@ -1,5 +1,8 @@
 #include "./core.h"
+#include "./getopt.h"
 #include "./utils.h"
+
+#include <string.h>
 
 //-----------------------------------------------------------------------------
 
@@ -37,13 +40,6 @@ typedef enum {
     SIGN_NEG,
 } sign_e;
 
-typedef enum {
-    TYPE_NEG_INT,
-    TYPE_POS_INT,
-    TYPE_FLOAT,
-    TYPE_STRING,
-} arg_type_e;
-
 //-----------------------------------------------------------------------------
 
 static bool shell_key_scan(shell_t* shell, uint8_t data);
@@ -56,9 +52,7 @@ void history_swtich(shell_t* shell, dir_e dir);
 static void shell_insert_byte(shell_t* shell, uint8_t data);
 static void shell_remove_byte(shell_t* shell, del_e dir);
 
-static bool shell_parse_cmd(shell_t* shell);
-arg_type_e  shell_parse_arg(shell_t* shell, char* str, uint32_t* ret);
-static void shell_exec(shell_t* shell);
+static void shell_exec_cmd(shell_t* shell);
 
 static cmd_t* shell_seek_cmd(shell_t* shell, const char* str);
 
@@ -96,11 +90,11 @@ static int shell_call_func(shell_t* shell, cmd_t* cmd)
             goto _error;
         }
 
-        int32_t args[CONFIG_SHELL_PARAMETER_MAX_COUNT] = {0};
+        uint32_t args[CONFIG_SHELL_PARAMETER_MAX_COUNT] = {0};
 
         for (uint8_t i = 0; i < argc; i++)
         {
-            shell_parse_arg(shell, shell->parser.argv[i + 1], &args[i]);
+            cmd_parse_arg(shell, shell->parser.argv[i + 1], &args[i]);
         }
 
         switch (argc)
@@ -177,7 +171,7 @@ static int shell_call_func(shell_t* shell, cmd_t* cmd)
                                      args[10], args[11]);
 #endif
 #if CONFIG_SHELL_PARAMETER_MAX_COUNT > 12
-#Warning "too many parameters"
+#warning "too many parameters"
 #endif
             default:
                 break;
@@ -185,7 +179,7 @@ static int shell_call_func(shell_t* shell, cmd_t* cmd)
     }
     else if (cmd->attr.bits.type == CMD_TYPE_KEY)
     {
-        cmd->key.cbk(shell);
+        cmd->func.cbk(shell, shell->parser.argc, shell->parser.argv);
         return 0;
     }
 
@@ -360,6 +354,9 @@ static void shell_show_logo(shell_t* shell)
     // Font Name: Delta Corps Priest 1
 
     shell->puts("\r\n");
+
+#if 0  // normal
+
     shell->puts("███    █▄     ▄████████    ▄█    █▄       ▄████████  ▄█        ▄█       \r\n");
     shell->puts("███    ███   ███    ███   ███    ███     ███    ███ ███       ███       \r\n");
     shell->puts("███    ███   ███    █▀    ███    ███     ███    █▀  ███       ███       \r\n");
@@ -369,6 +366,19 @@ static void shell_show_logo(shell_t* shell)
     shell->puts("███    ███    ▄█    ███   ███    ███     ███    ███ ███▌    ▄ ███▌    ▄ \r\n");
     shell->puts("████████▀   ▄████████▀    ███    █▀      ██████████ █████▄▄██ █████▄▄██ \r\n");
     shell->puts("                                                    ▀         ▀         \r\n");
+
+#else  // colorful
+
+    shell->puts(FONT_COLO_RED "███    █▄  " FONT_COLO_GREEN "   ▄████████ " FONT_COLO_LIGHTBLUE "   ▄█    █▄    " FONT_COLO_PURPLE "   ▄████████ " FONT_COLO_YELLOW " ▄█       " FONT_COLO_BLUE " ▄█       " FONT_COLO_WHITE "\r\n");
+    shell->puts(FONT_COLO_RED "███    ███ " FONT_COLO_GREEN "  ███    ███ " FONT_COLO_LIGHTBLUE "  ███    ███   " FONT_COLO_PURPLE "  ███    ███ " FONT_COLO_YELLOW "███       " FONT_COLO_BLUE "███       " FONT_COLO_WHITE "\r\n");
+    shell->puts(FONT_COLO_RED "███    ███ " FONT_COLO_GREEN "  ███    █▀  " FONT_COLO_LIGHTBLUE "  ███    ███   " FONT_COLO_PURPLE "  ███    █▀  " FONT_COLO_YELLOW "███       " FONT_COLO_BLUE "███       " FONT_COLO_WHITE "\r\n");
+    shell->puts(FONT_COLO_RED "███    ███ " FONT_COLO_GREEN "  ███        " FONT_COLO_LIGHTBLUE " ▄███▄▄▄▄███▄▄ " FONT_COLO_PURPLE " ▄███▄▄▄     " FONT_COLO_YELLOW "███       " FONT_COLO_BLUE "███       " FONT_COLO_WHITE "\r\n");
+    shell->puts(FONT_COLO_RED "███    ███ " FONT_COLO_GREEN "▀███████████ " FONT_COLO_LIGHTBLUE "▀▀███▀▀▀▀███▀  " FONT_COLO_PURPLE "▀▀███▀▀▀     " FONT_COLO_YELLOW "███       " FONT_COLO_BLUE "███       " FONT_COLO_WHITE "\r\n");
+    shell->puts(FONT_COLO_RED "███    ███ " FONT_COLO_GREEN "         ███ " FONT_COLO_LIGHTBLUE "  ███    ███   " FONT_COLO_PURPLE "  ███    █▄  " FONT_COLO_YELLOW "███       " FONT_COLO_BLUE "███       " FONT_COLO_WHITE "\r\n");
+    shell->puts(FONT_COLO_RED "███    ███ " FONT_COLO_GREEN "   ▄█    ███ " FONT_COLO_LIGHTBLUE "  ███    ███   " FONT_COLO_PURPLE "  ███    ███ " FONT_COLO_YELLOW "███▌    ▄ " FONT_COLO_BLUE "███▌    ▄ " FONT_COLO_WHITE "\r\n");
+    shell->puts(FONT_COLO_RED "████████▀  " FONT_COLO_GREEN " ▄████████▀  " FONT_COLO_LIGHTBLUE "  ███    █▀    " FONT_COLO_PURPLE "  ██████████ " FONT_COLO_YELLOW "█████▄▄██ " FONT_COLO_BLUE "█████▄▄██ " FONT_COLO_WHITE "\r\n");
+    shell->puts("                                                    " FONT_COLO_YELLOW "▀         " FONT_COLO_BLUE "▀         " FONT_COLO_WHITE "\r\n");
+#endif
     shell->puts("\r\n");
 }
 
@@ -612,359 +622,6 @@ static bool shell_key_scan(shell_t* shell, uint8_t data)
     return false;
 }
 
-static void shell_exec(shell_t* shell)
-{
-    shell->puts("\r\n");
-
-    if (shell->parser.length == 0)
-    {
-        return;
-    }
-
-#if CONFIG_SHELL_HISTROY_MAX_COUNT > 0
-    history_append(shell);
-#endif
-
-    if (shell_parse_cmd(shell) == false)
-    {
-        return;
-    }
-
-    cmd_t* cmd = shell_seek_cmd(shell, shell->parser.argv[0]);
-
-    if (cmd == NULL)
-    {
-        shell->puts("Command not Found: \"");
-        shell->puts(shell->parser.buffer);
-        shell->puts("\"\r\n");
-    }
-    else
-    {
-        if (__cmd_type_func_start < cmd->attr.bits.type && cmd->attr.bits.type < __cmd_type_func_end)
-        {
-            shell_call_func(shell, cmd);
-        }
-        else if (__cmd_type_var_start < cmd->attr.bits.type && cmd->attr.bits.type < __cmd_type_var_end)
-        {
-            shell_show_var(shell, cmd);
-        }
-    }
-
-    shell->parser.length = shell->parser.cursor = 0;
-}
-
-static cmd_t* shell_seek_cmd(shell_t* shell, const char* str)
-{
-    cmd_t* base = shell->cmds.base;
-
-    uint32_t hash = generate_hash(str);
-
-    for (uint16_t i = 0; i < shell->cmds.count; i++)
-    {
-        if (hash == base[i].hash)
-        {
-            char* name = shell_get_cmd_name(shell, &base[i]);
-
-            if (name != NULL && strcmp(str, name) == 0)
-            {
-                return &base[i];
-            }
-        }
-    }
-
-    return NULL;
-}
-
-static char* shell_get_cmd_desc(shell_t* shell, cmd_t* cmd)
-{
-    if (__cmd_type_func_start < cmd->attr.bits.type && cmd->attr.bits.type < __cmd_type_func_end)
-    {
-        return cmd->func.desc;
-    }
-    else if (__cmd_type_var_start < cmd->attr.bits.type && cmd->attr.bits.type < __cmd_type_var_end)
-    {
-        return cmd->var.desc;
-    }
-    else if (cmd->attr.bits.type == CMD_TYPE_KEY)
-    {
-        return cmd->key.desc;
-    }
-
-    return NULL;
-}
-
-static char* shell_get_cmd_name(shell_t* shell, cmd_t* cmd)
-{
-    if (__cmd_type_func_start < cmd->attr.bits.type && cmd->attr.bits.type < __cmd_type_func_end)
-    {
-        return cmd->func.name;
-    }
-    else if (__cmd_type_var_start < cmd->attr.bits.type && cmd->attr.bits.type < __cmd_type_var_end)
-    {
-        return cmd->var.name;
-    }
-    else if (cmd->attr.bits.type == CMD_TYPE_KEY)
-    {
-        return NULL;
-    }
-
-    return NULL;
-}
-
-static conv_state_e scan_int(char* str, uint8_t base, uint32_t* ret, char** pend)
-{
-    char* pcur = str;
-
-    uint32_t num = 0;
-    uint8_t  addon;
-
-    if (*pcur)
-    {
-        for (; *pcur; ++pcur)
-        {
-            if (base < 10)
-            {
-                if (INCLOSE('0', *pcur, '0' - 1 + base))
-                {
-                    addon = *pcur - '0';
-                }
-                else
-                {
-                    break;
-                }
-            }
-            else
-            {
-                if (INCLOSE('0', *pcur, '9'))
-                {
-                    addon = *pcur - '0';
-                }
-                else if (INCLOSE('a', *pcur, 'a' - 10 + base))
-                {
-                    addon = *pcur - 'a' + 10;
-                }
-                else if (INCLOSE('A', *pcur, 'A' - 10 + base))
-                {
-                    addon = *pcur - 'A' + 10;
-                }
-                else
-                {
-                    break;
-                }
-            }
-
-            num *= (uint32_t)base;
-            num += addon;
-        }
-
-        *ret = num;
-
-        if (pend != NULL)
-        {
-            // return the pointer where it stop
-            *pend = pcur;
-        }
-
-        return *pcur ? CONV_STATE_HALT : CONV_STATE_FULL;
-    }
-
-    return CONV_STATE_NONE;
-}
-
-arg_type_e shell_parse_arg(shell_t* shell, char* str, uint32_t* ret)
-{
-    char* p = str;
-
-    uint32_t integer  = 0;  // 整数
-    uint32_t decimal  = 0;  // 小数
-    uint32_t exponent = 0;  // 指数
-
-    sign_e int_sign = SIGN_POS;
-    sign_e exp_sign = SIGN_POS;
-
-    switch (*p)
-    {
-        case '0': {
-            switch (*++p)
-            {
-                case 'b':
-                case 'B':  // bin
-                {
-                    if (scan_int(++p, 2, &integer, NULL) == CONV_STATE_FULL)
-                    {
-                        goto _as_int;
-                    }
-
-                    break;
-                }
-
-                case 'x':
-                case 'X':  // hex
-                {
-                    if (scan_int(++p, 16, &integer, NULL) == CONV_STATE_FULL)
-                    {
-                        goto _as_int;
-                    }
-                    break;
-                }
-
-                // float
-                case '.':
-                    goto _chk_flt_pt;
-                case 'e':
-                case 'E':
-                    goto _chk_flt_exp;
-
-                case '0' ... '7':  // oct
-                {
-                    if (scan_int(p, 8, &integer, NULL) == CONV_STATE_FULL)
-                    {
-                        goto _as_int;
-                    }
-
-                    break;
-                }
-
-                default:
-                    break;
-            }
-
-            goto _as_str;
-        }
-
-        case '-':
-            int_sign = SIGN_NEG;
-        case '+':
-        case '1' ... '9': {
-            if (scan_int(p, 10, &integer, &p) == CONV_STATE_FULL)
-            {
-                goto _as_int;
-            }
-
-            if (*p == '.')
-            {
-            _chk_flt_pt:
-                if (scan_int(++p, 10, &decimal, &p) == CONV_STATE_FULL)
-                {
-                    goto _as_flt;
-                }
-            }
-
-            if (*p == 'e' || *p == 'E')
-            {
-            _chk_flt_exp:
-                switch (*++p)
-                {
-                    case '-':
-                        exp_sign = SIGN_NEG;
-                    case '+':
-                        ++p;
-                    case '0' ... '9': {
-                        if (scan_int(p, 10, &exponent, NULL) == CONV_STATE_FULL)
-                        {
-                            if (exp_sign == SIGN_NEG)
-                            {
-                                exponent = -exponent;
-                            }
-
-                            goto _as_flt;
-                        }
-                        break;
-                    }
-                    default:
-                        break;
-                }
-            }
-
-            goto _as_str;
-        }
-
-        case '$': {
-            if (*++p)
-            {
-                // var scan
-                goto _as_var;
-            }
-
-            goto _as_str;
-        }
-
-        default:
-            goto _as_str;
-    }
-
-    //-------------------------------------------------------------------------
-
-    float flt;
-
-_as_str:
-
-    // format it
-    *ret = (uint32_t)str;
-    return TYPE_STRING;
-
-_as_int:
-
-    if (int_sign == SIGN_POS)
-    {
-        *ret = integer;
-        return TYPE_POS_INT;
-    }
-    else
-    {
-        *ret = -integer;
-        return TYPE_NEG_INT;
-    }
-
-_as_flt:
-
-    flt = decimal;
-
-    while (flt > 1)
-    {
-        flt /= 10;
-    }
-
-    flt += integer;
-
-    if (int_sign == SIGN_NEG)
-    {
-        flt = -flt;
-    }
-
-    if (exp_sign == SIGN_POS)
-    {
-        while (exponent--)
-        {
-            flt *= 10;
-
-            if (flt == 0.0f)
-            {
-                break;
-            }
-        }
-    }
-    else
-    {
-        while (exponent--)
-        {
-            flt /= 10;
-
-            if (flt == 0.0f)
-            {
-                break;
-            }
-        }
-    }
-
-    *ret = *(uint32_t*)&flt;
-
-    return TYPE_FLOAT;
-
-_as_var:
-    return TYPE_NEG_INT;
-}
-
 static bool shell_parse_cmd(shell_t* shell)
 {
     struct {
@@ -1111,61 +768,143 @@ __error:
     return false;
 }
 
-// CMD_EXPORT_FUNC(CMD_TYPE(CMD_TYPE_FUNC_MAIN), exec, shellExecute, execute function undefined);
+static void shell_exec_cmd(shell_t* shell)
+{
+    shell->puts("\r\n");
+
+    if (shell->parser.length == 0)
+    {
+        return;
+    }
+
+#if CONFIG_SHELL_HISTROY_MAX_COUNT > 0
+    history_append(shell);
+#endif
+
+    if (shell_parse_cmd(shell) == false)
+    {
+        return;
+    }
+
+    cmd_t* cmd = shell_seek_cmd(shell, shell->parser.argv[0]);
+
+    if (cmd == NULL)
+    {
+        shell->puts("Command not Found: \"");
+        shell->puts(shell->parser.buffer);
+        shell->puts("\"\r\n");
+    }
+    else
+    {
+        if (__cmd_type_func_start < cmd->attr.bits.type && cmd->attr.bits.type < __cmd_type_func_end)
+        {
+            shell_call_func(shell, cmd);
+        }
+        else if (__cmd_type_var_start < cmd->attr.bits.type && cmd->attr.bits.type < __cmd_type_var_end)
+        {
+            shell_show_var(shell, cmd);
+        }
+    }
+
+    shell->parser.length = shell->parser.cursor = 0;
+}
+
+static cmd_t* shell_seek_cmd(shell_t* shell, const char* str)
+{
+    cmd_t* base = shell->cmds.base;
+
+    uint32_t hash = generate_hash(str);
+
+    for (uint16_t i = 0; i < shell->cmds.count; i++)
+    {
+        if (hash == base[i].hash)
+        {
+            char* name = shell_get_cmd_name(shell, &base[i]);
+
+            if (name != NULL && strcmp(str, name) == 0)
+            {
+                return &base[i];
+            }
+        }
+    }
+
+    return NULL;
+}
+
+static char* shell_get_cmd_desc(shell_t* shell, cmd_t* cmd)
+{
+    if (__cmd_type_func_start < cmd->attr.bits.type && cmd->attr.bits.type < __cmd_type_func_end)
+    {
+        return cmd->func.desc;
+    }
+    else if (__cmd_type_var_start < cmd->attr.bits.type && cmd->attr.bits.type < __cmd_type_var_end)
+    {
+        return cmd->var.desc;
+    }
+    else if (cmd->attr.bits.type == CMD_TYPE_KEY)
+    {
+        return cmd->key.desc;
+    }
+
+    return NULL;
+}
+
+static char* shell_get_cmd_name(shell_t* shell, cmd_t* cmd)
+{
+    if (__cmd_type_func_start < cmd->attr.bits.type && cmd->attr.bits.type < __cmd_type_func_end)
+    {
+        return cmd->func.name;
+    }
+    else if (__cmd_type_var_start < cmd->attr.bits.type && cmd->attr.bits.type < __cmd_type_var_end)
+    {
+        return cmd->var.name;
+    }
+    else if (cmd->attr.bits.type == CMD_TYPE_KEY)
+    {
+        return NULL;
+    }
+
+    return NULL;
+}
+
+CMD_EXPORT_FUNC(CMD_TYPE(CMD_TYPE_FUNC_C) | CMD_FUNC_ARGC(0), logo, shell_show_logo, show shell logo);
+
+void shell_exec(shell_t* shell, const char* str)
+{
+    char* psrc = str;
+    char* pdst = shell->parser.buffer;
+
+    int n;
+
+    printf(str);
+    printf("\r\n");
+
+    for (n = 0; n < shell->parser.capacity && *psrc; ++n)
+    {
+        *pdst++ == *psrc++;
+    }
+
+    shell->parser.cursor = shell->parser.length = n;
+
+    shell_exec_cmd(shell);
+}
 
 //-----------------------------------------------------------------------------
 // shell format inout
 
-#if CONFIG_SHELL_SCANF_BUFSIZE > 0
-
-void shell_scanf(shell_t* shell, char* fmt, ...)
-{
-    char buffer[CONFIG_SHELL_SCANF_BUFSIZE];
-
-    va_list  vargs;
-    uint16_t index = 0;
-
-    while (index < sizeof(buffer))
-    {
-        if (shell->getc(&buffer[index]))
-        {
-            shell_printf(shell, "%c", buffer[index]);
-
-            if (buffer[index] == '\r' ||
-                buffer[index] == '\n')
-            {
-                break;
-            }
-
-            index++;
-        }
-    }
-
-    if (index == sizeof(buffer))
-    {
-        index--;
-    }
-
-    buffer[index] = '\0';
-
-    va_start(vargs, fmt);
-    vsscanf(buffer, fmt, vargs);
-    va_end(vargs);
-}
-
-#endif
-
-void shell_printf(shell_t* shell, const char* fmt, ...)
+int shell_printf(shell_t* shell, const char* fmt, ...)
 {
     static char buffer[CONFIG_SHELL_PRINTF_BUFSIZE];
 
     va_list vargs;
 
     va_start(vargs, fmt);
-    uint16_t length = vsnprintf(buffer, CONFIG_SHELL_PRINTF_BUFSIZE, fmt, vargs);
+    uint16_t length = vsnprintf(buffer, CONFIG_SHELL_PRINTF_BUFSIZE - 1, fmt, vargs);
     va_end(vargs);
 
     shell->puts(buffer);
+
+    return length;
 }
 
 //-----------------------------------------------------------------------------
@@ -1250,29 +989,6 @@ void shell_list_all(shell_t* shell)
     shell_list_vars(shell);
 }
 
-static void shell_show_help(shell_t* shell, int argc, char* argv[])
-{
-    if (argc == 1)
-    {
-        shell_list_all(shell);
-    }
-    else if (argc == 2)
-    {
-        cmd_t* cmd = shell_seek_cmd(shell, argv[1]);
-
-        if (cmd != NULL)
-        {
-            char* desc = shell_get_cmd_desc(shell, cmd);
-
-            if (desc != NULL)
-            {
-                shell->puts(desc);
-                shell->puts("\r\n");
-            }
-        }
-    }
-}
-
 void shell_list_cmds(shell_t* shell)
 {
     shell->puts("Command List:\r\n");
@@ -1303,6 +1019,29 @@ void shell_list_vars(shell_t* shell)
     }
 }
 
+static void shell_show_help(shell_t* shell, int argc, char* argv[])
+{
+    if (argc == 1)
+    {
+        shell_list_all(shell);
+    }
+    else if (argc == 2)
+    {
+        cmd_t* cmd = shell_seek_cmd(shell, argv[1]);
+
+        if (cmd != NULL)
+        {
+            char* desc = shell_get_cmd_desc(shell, cmd);
+
+            if (desc != NULL)
+            {
+                shell->puts(desc);
+                shell->puts("\r\n");
+            }
+        }
+    }
+}
+
 void shell_show_history(shell_t* shell)
 {
     for (uint16_t i = 0; i < shell->history.count; ++i)
@@ -1317,16 +1056,44 @@ CMD_EXPORT_FUNC(CMD_TYPE(CMD_TYPE_FUNC_C), vars, shell_list_vars, list all var)
 CMD_EXPORT_FUNC(CMD_TYPE(CMD_TYPE_FUNC_MAIN), help, shell_show_help, show command info);
 CMD_EXPORT_FUNC(CMD_TYPE(CMD_TYPE_FUNC_C), history, shell_show_history, show history)
 
+//-----------------------------------------------------------------------------
+// display input
+
 static void shell_echo(shell_t* shell, int argc, char* argv[])
 {
     if (argc >= 2)
     {
         shell_printf(shell, argv[1]);
-        shell_printf(shell, "\r\n");
+        shell->puts("\r\n");
+    }
+}
+
+void shell_show_args(shell_t* shell, int argc, char* argv[])
+{
+    for (uint16_t i = 0; i < argc; ++i)
+    {
+        shell_printf(shell, "%d. %s\r\n", i, argv[i]);
     }
 }
 
 CMD_EXPORT_FUNC(CMD_TYPE(CMD_TYPE_FUNC_MAIN), echo, shell_echo, echo)
+CMD_EXPORT_FUNC(CMD_TYPE(CMD_TYPE_FUNC_MAIN), args, shell_show_args, show args)
+
+void shell_show_arg_int(shell_t* shell, int32_t n)
+{
+    shell_printf(shell, "%d,%d\r\n", (int32_t)n, (uint32_t)n);
+}
+void shell_show_arg_fp(shell_t* shell, float32_t fp)
+{
+    shell_printf(shell, "%f\r\n", fp);
+}
+void shell_show_arg_str(shell_t* shell, const char* str)
+{
+    shell_printf(shell, "%s\r\n", str);
+}
+CMD_EXPORT_FUNC(CMD_TYPE(CMD_TYPE_FUNC_C) | CMD_FUNC_ARGC(1), argint, shell_show_arg_int, show arg in int);
+CMD_EXPORT_FUNC(CMD_TYPE(CMD_TYPE_FUNC_C) | CMD_FUNC_ARGC(1), argfp, shell_show_arg_fp, show arg in float);
+CMD_EXPORT_FUNC(CMD_TYPE(CMD_TYPE_FUNC_C) | CMD_FUNC_ARGC(1), argstr, shell_show_arg_str, show arg in string);
 
 //-----------------------------------------------------------------------------
 // console key handler
@@ -1363,7 +1130,7 @@ static void console_clear_line(shell_t* shell)
     shell->parser.buffer[shell->parser.length = shell->parser.cursor = 0] = '\0';
     shell_show_prompt(shell);
 }
-CMD_EXPORT_KEY(0, 0x15000000, console_clear_line, clear line);  // Ctrl+U
+CMD_EXPORT_KEY(0, 0x15000000, console_clear_line, );  // Ctrl+U
 
 static void console_clear_screen(shell_t* shell)
 {
@@ -1392,7 +1159,7 @@ static void console_cursor_delete_to_end(shell_t* shell, uint16_t distance)
         shell->parser.buffer[shell->parser.length = shell->parser.cursor] = '\0';
     }
 }
-CMD_EXPORT_KEY(0, 0x0B000000, console_cursor_delete_to_end, delete to the end of the line);  // Ctrl+K
+CMD_EXPORT_KEY(0, 0x0B000000, console_cursor_delete_to_end, );  // Ctrl+K
 
 static void console_key_tab(shell_t* shell)
 {
@@ -1443,31 +1210,31 @@ static void console_key_tab(shell_t* shell)
         shell->puts(shell->parser.buffer);
     }
 }
-CMD_EXPORT_KEY(0, 0x09000000, console_key_tab, tab);  // '\t'
+CMD_EXPORT_KEY(0, 0x09000000, console_key_tab, );  // '\t'
 
 static void console_key_delete(shell_t* shell)
 {
     // delete a single character at the cursor position
     shell_remove_byte(shell, DEL_CURR);
 }
-CMD_EXPORT_KEY(0, 0x1B5B337E, console_key_delete, delete);  // Delete
-CMD_EXPORT_KEY(0, 0x04000000, console_key_delete, delete);  // Ctrl+D
+CMD_EXPORT_KEY(0, 0x1B5B337E, console_key_delete, );  // Delete
+CMD_EXPORT_KEY(0, 0x04000000, console_key_delete, );  // Ctrl+D
 
 static void console_key_backspace(shell_t* shell)
 {
     shell_remove_byte(shell, DEL_PREV);
 }
-CMD_EXPORT_KEY(0, 0x08000000, console_key_backspace, backspace);  // Backspace
-CMD_EXPORT_KEY(0, 0x7F000000, console_key_backspace, backspace);  // Ctrl+H
+CMD_EXPORT_KEY(0, 0x08000000, console_key_backspace, );  // Backspace
+CMD_EXPORT_KEY(0, 0x7F000000, console_key_backspace, );  // Ctrl+H
 
 static void console_key_enter(shell_t* shell)
 {
-    shell_exec(shell);
+    shell_exec_cmd(shell);
     shell_show_prompt(shell);
 }
-CMD_EXPORT_KEY(0, 0x0A000000, console_key_enter, enter);  // ENTER_LF, '\r'
-CMD_EXPORT_KEY(0, 0x0D000000, console_key_enter, enter);  // ENTER_CR, '\n'
-CMD_EXPORT_KEY(0, 0x0D0A0000, console_key_enter, enter);  // ENTER_CRLF, '\r\n'
+CMD_EXPORT_KEY(0, 0x0A000000, console_key_enter, );  // ENTER_LF, '\r'
+CMD_EXPORT_KEY(0, 0x0D000000, console_key_enter, );  // ENTER_CR, '\n'
+CMD_EXPORT_KEY(0, 0x0D0A0000, console_key_enter, );  // ENTER_CRLF, '\r\n'
 
 static void console_key_letf_arrow(shell_t* shell)
 {
@@ -1477,8 +1244,8 @@ static void console_key_letf_arrow(shell_t* shell)
         shell->puts("\b");
     }
 }
-CMD_EXPORT_KEY(0, 0x1B5B4400, console_key_letf_arrow, left);  // '\e[D'
-CMD_EXPORT_KEY(0, 0x02000000, console_key_letf_arrow, left);  // Ctrl+B
+CMD_EXPORT_KEY(0, 0x1B5B4400, console_key_letf_arrow, );  // '\e[D'
+CMD_EXPORT_KEY(0, 0x02000000, console_key_letf_arrow, );  // Ctrl+B
 
 static void console_key_right_arrow(shell_t* shell)
 {
@@ -1487,8 +1254,8 @@ static void console_key_right_arrow(shell_t* shell)
         shell_printf(shell, "%c", shell->parser.buffer[shell->parser.cursor++]);
     }
 }
-CMD_EXPORT_KEY(0, 0x1B5B4300, console_key_right_arrow, right);  // '\e[C'
-CMD_EXPORT_KEY(0, 0x06000000, console_key_right_arrow, right);  // Ctrl+F
+CMD_EXPORT_KEY(0, 0x1B5B4300, console_key_right_arrow, );  // '\e[C'
+CMD_EXPORT_KEY(0, 0x06000000, console_key_right_arrow, );  // Ctrl+F
 
 static void console_cursor_move_begin(shell_t* shell)
 {
@@ -1499,7 +1266,7 @@ static void console_cursor_move_begin(shell_t* shell)
         shell->parser.cursor--;
     }
 }
-CMD_EXPORT_KEY(0, 0x01000000, console_cursor_move_begin, move cursor to start of the line);  // Ctrl+A
+CMD_EXPORT_KEY(0, 0x01000000, console_cursor_move_begin, );  // Ctrl+A
 
 static void console_cursor_move_end(shell_t* shell, uint16_t distance)
 {
@@ -1510,7 +1277,7 @@ static void console_cursor_move_end(shell_t* shell, uint16_t distance)
         shell->parser.cursor = shell->parser.length;
     }
 }
-CMD_EXPORT_KEY(0, 0x05000000, console_cursor_move_end, move cursor to end of the line);  // Ctrl+E
+CMD_EXPORT_KEY(0, 0x05000000, console_cursor_move_end, );  // Ctrl+E
 
 #if CONFIG_SHELL_HISTROY_MAX_COUNT > 0
 
@@ -1528,4 +1295,6 @@ CMD_EXPORT_KEY(0, 0x1B5B4200, console_key_down_arrow, down);  // '\e[B'
 
 #endif
 
-//
+//-------------------------------------------------------------------------
+
+// CMD_EXPORT_FUNC(CMD_TYPE(CMD_TYPE_FUNC_MAIN), exec, shellExecute, execute function undefined);

@@ -56,6 +56,19 @@
         "*.tcc": "c",
         "functional": "c",
         "__locale": "c",
-        "system.h": "c"
+        "system.h": "c",
+        "getopt.h": "c",
+        "stdlib.h": "c",
+        "__node_handle": "c",
+        "atomic": "c",
+        "__memory": "c",
+        "optional": "c",
+        "ratio": "c",
+        "system_error": "c",
+        "ostream": "c",
+        "ios": "c",
+        "ctype.h": "c",
+        "sstream": "c",
+        "hotkey.h": "c"
     }
 }

@@ -21,8 +21,8 @@
                 "f:\\how-to-use-fk-stm32h750xbh6-m4\\5.Examples\\CubeMX\\Board\\pinctrl",
                 "f:\\how-to-use-fk-stm32h750xbh6-m4\\5.Examples\\CubeMX\\Board\\serial",
                 "f:\\how-to-use-fk-stm32h750xbh6-m4\\5.Examples\\CubeMX\\Demos\\UART_Shell\\Libraries\\Shell",
-                "C:\\Users\\Administrator\\STM32Cube\\Repository\\STM32Cube_FW_H7_V1.11.0\\Drivers\\STM32H7xx_HAL_Driver\\Src",
-                "f:\\how-to-use-fk-stm32h750xbh6-m4\\5.Examples\\CubeMX\\Demos\\UART_Shell\\Libraries\\Shell\\ext"
+                "f:\\how-to-use-fk-stm32h750xbh6-m4\\5.Examples\\CubeMX\\Demos\\UART_Shell\\Libraries\\Shell\\ext",
+                "C:\\Users\\Administrator\\STM32Cube\\Repository\\STM32Cube_FW_H7_V1.11.0\\Drivers\\STM32H7xx_HAL_Driver\\Src"
             ],
             "defines": [
                 "USE_HAL_DRIVER",

@@ -46,8 +46,6 @@
 
 /* USER CODE BEGIN PV */
 
-// CMD_EXPORT(history, "Show command history", show_history);
-
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -64,7 +62,8 @@ int blink(shell_t* shell, int argc, char** argv)
 {
     if (argc != 2)
     {
-        shell_info("Usage: %s STATE\n"
+        shell_info(shell,
+                   "Usage: %s STATE\n"
                    " STATE is one of "
                    " - 0: off\n"
                    " - 1: on\n"
@@ -137,6 +136,29 @@ int main(void)
     MX_I2C1_Init();
     /* USER CODE BEGIN 2 */
     shell_setup();
+
+    // shell_argtst_exec("10e2");   // int
+    // shell_argtst_exec("10e+2");  // int
+    // shell_argtst_exec("10e-2");  // fp
+
+    // shell_argtst_exec("0e");    // int = 0
+    // shell_argtst_exec("0e6");   // int = 0
+    // shell_argtst_exec("0e+6");  // int = 0
+    // shell_argtst_exec("0e-6");  // int = 0
+
+    // shell_argtst_exec("00.456e");    // str
+    // shell_argtst_exec("00.456e2");   // str
+    // shell_argtst_exec("00.456e+2");  // str
+    // shell_argtst_exec("00.456e-2");  // str
+
+    // shell_argtst_exec("0.456e");      // str
+    // shell_argtst_exec("0.456e2");     // fp
+    // shell_argtst_exec("0.456e+2");    // fp
+    // shell_argtst_exec("0.456e-2");    // fp
+    // shell_argtst_exec("123.456e2");   // fp
+    // shell_argtst_exec("123.456e+2");  // fp
+    // shell_argtst_exec("123.456e-2");  // fp
+
     /* USER CODE END 2 */
 
     /* Infinite loop */

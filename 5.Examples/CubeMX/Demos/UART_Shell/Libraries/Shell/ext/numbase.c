@@ -1,5 +1,5 @@
-#include "./numbase.h"
 #include "../core.h"
+
 //-----------------------------------------------------------------------------
 
 int base_conv(shell_t* shell, uint32_t number)

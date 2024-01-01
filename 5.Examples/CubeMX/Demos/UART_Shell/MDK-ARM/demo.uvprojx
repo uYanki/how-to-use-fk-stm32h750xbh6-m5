@@ -642,6 +642,51 @@
               <FileType>1</FileType>
               <FilePath>..\Libraries\Shell\utils.c</FilePath>
             </File>
+            <File>
+              <FileName>getopt.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Libraries\Shell\getopt.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>Libraries/Shell/Ext</GroupName>
+          <Files>
+            <File>
+              <FileName>canopen.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Libraries\Shell\ext\canopen.c</FilePath>
+            </File>
+            <File>
+              <FileName>modbus.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Libraries\Shell\ext\modbus.c</FilePath>
+            </File>
+            <File>
+              <FileName>numbase.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Libraries\Shell\ext\numbase.c</FilePath>
+            </File>
+            <File>
+              <FileName>system.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Libraries\Shell\ext\system.c</FilePath>
+            </File>
+            <File>
+              <FileName>i2ctool.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Libraries\Shell\ext\i2ctool.c</FilePath>
+            </File>
+            <File>
+              <FileName>utils.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Libraries\Shell\ext\utils.c</FilePath>
+            </File>
+            <File>
+              <FileName>memtool.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Libraries\Shell\ext\memtool.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -1835,36 +1880,6 @@
                   </Cads>
                 </FileArmAds>
               </FileOption>
-            </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>Libraries/Shell/Ext</GroupName>
-          <Files>
-            <File>
-              <FileName>canopen.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Libraries\Shell\ext\canopen.c</FilePath>
-            </File>
-            <File>
-              <FileName>memory.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Libraries\Shell\ext\memory.c</FilePath>
-            </File>
-            <File>
-              <FileName>modbus.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Libraries\Shell\ext\modbus.c</FilePath>
-            </File>
-            <File>
-              <FileName>numbase.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Libraries\Shell\ext\numbase.c</FilePath>
-            </File>
-            <File>
-              <FileName>system.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Libraries\Shell\ext\system.c</FilePath>
             </File>
           </Files>
         </Group>

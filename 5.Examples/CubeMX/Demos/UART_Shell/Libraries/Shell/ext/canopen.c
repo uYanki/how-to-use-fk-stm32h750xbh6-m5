@@ -1,1 +1,1 @@
-#include "./canopen.h"
+#include "../core.h"
