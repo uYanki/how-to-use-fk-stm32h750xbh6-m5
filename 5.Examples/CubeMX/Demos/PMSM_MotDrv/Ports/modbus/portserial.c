@@ -6,8 +6,11 @@
 #include "usart.h"
 #include "serial/bsp_uart.h"
 
-// 开启DCache后, 是否要8字节对齐??
+#if __DCACHE_PRESENT == 1U
+ALIGN_32BYTES(static uint8_t mUartRxFrame[CONFIG_UART_RXBUF_SIZE]) = {0};
+#else
 static uint8_t mUartRxFrame[CONFIG_UART_RXBUF_SIZE] = {0};
+#endif
 
 void vMBPortSerialEnable(bool xRxEnable, bool xTxEnable)
 {
@@ -22,7 +25,6 @@ void vMBPortSerialEnable(bool xRxEnable, bool xTxEnable)
     }
 }
 
-
 bool xMBPortSerialInit(uint8_t ucPort, uint32_t ulBaudRate, uint8_t ucDataBits, eMBParity eParity)
 {
     // ucPort is set by eMBInit
@@ -31,8 +33,8 @@ bool xMBPortSerialInit(uint8_t ucPort, uint32_t ulBaudRate, uint8_t ucDataBits, 
 
     if (ucPort == 1)
     {
-			// PB6(TX) & PB7(RX)
-        huart = &huart1; 
+        // PB6(TX) & PB7(RX)
+        huart = &huart1;
     }
     else
     {
@@ -86,9 +88,8 @@ bool xMBPortSerialInit(uint8_t ucPort, uint32_t ulBaudRate, uint8_t ucDataBits, 
     return true;
 }
 
-
 extern void modbus_rxcbk(const uint8_t* buffer, uint16_t length);
-extern void modbus_txcbk(void);			
+extern void modbus_txcbk(void);
 
 // call in main()
 void Modbus_StartReceive(void)
@@ -116,9 +117,10 @@ void HAL_UART_IdleCpltCallback(UART_HandleTypeDef* huart)
 
             if (length > 0)
             {
-                mUartRxFrame[length] = '\0';
+                // 使用 DCache + DMA 就必需 32位对齐
+                SCB_InvalidateDCache_by_Addr((uint32_t*)&mUartRxFrame[0], ARRAY_SIZE(mUartRxFrame) / 4);
 
-							  SCB_InvalidateDCache();
+                mUartRxFrame[length] = '\0';
                 modbus_rxcbk(mUartRxFrame, length);
             }
 
@@ -132,7 +134,7 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef* huart)
     if (huart->Instance == USART1)
     {
         __HAL_UART_DISABLE_IT(huart, UART_IT_TC);
-      
+
         modbus_txcbk();
 
         Uart_SetWorkDir(UART_DIR_RX);

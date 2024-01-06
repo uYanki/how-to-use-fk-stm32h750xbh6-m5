@@ -235,19 +235,6 @@ static int memfill(void* map, uint32_t addr, uint32_t len, uint32_t size, uint32
     return 0;
 }
 
-int cmd_memfill(shell_t* shell, int argc, char** argv)
-{
-    static const getopt_option_t memfill_opts[] = {
-        {"address", 'a', GETOPT_OPTION_TYPE_REQUIRED_INT32, NULL, 0x0, "memory address to fill",        NULL                     },
-        {"size",    's', GETOPT_OPTION_TYPE_REQUIRED_INT32, NULL, 0x0, "the size of fill unit",         "1:byte, 2:word, 4:dword"},
-        {"len",     'l', GETOPT_OPTION_TYPE_REQUIRED_INT32, NULL, 0x0, "the length of the fill region", NULL                     },
-        {"write",   'w', GETOPT_OPTION_TYPE_REQUIRED_INT32, NULL, 0x0, "show help message and exit",    NULL                     },
-        {"debug",   'd', GETOPT_OPTION_TYPE_OPTIONAL,       NULL, 0x0, "enable the debug log",          NULL                     },
-        {"help",    'h', GETOPT_OPTION_TYPE_NO_ARG,         NULL, 0x0, "show help message and exit",    NULL                     },
-        GETOPT_OPTIONS_END
-    };
-}
-
 static int cmd_memdump22(shell_t* shell, int argc, char** argv)
 {
     static const getopt_option_t opts_list[] = {

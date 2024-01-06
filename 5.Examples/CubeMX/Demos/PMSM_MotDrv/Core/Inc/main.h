@@ -58,6 +58,13 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define TIM_HALL &htim8
+#define ENC_HALL_B_Pin GPIO_PIN_6
+#define ENC_HALL_B_GPIO_Port GPIOI
+#define ENC_HALL_A_Pin GPIO_PIN_5
+#define ENC_HALL_A_GPIO_Port GPIOI
+#define ENC_HALL_C_Pin GPIO_PIN_7
+#define ENC_HALL_C_GPIO_Port GPIOI
 #define MOT_WH_Pin GPIO_PIN_10
 #define MOT_WH_GPIO_Port GPIOA
 #define MOT_VH_Pin GPIO_PIN_9
@@ -66,20 +73,16 @@ void Error_Handler(void);
 #define LED_GPIO_Port GPIOC
 #define MOT_UH_Pin GPIO_PIN_8
 #define MOT_UH_GPIO_Port GPIOA
-#define ENC_HALL_B_Pin GPIO_PIN_2
-#define ENC_HALL_B_GPIO_Port GPIOC
-#define ENC_HALL_A_Pin GPIO_PIN_2
-#define ENC_HALL_A_GPIO_Port GPIOA
-#define ENC_HALL_C_Pin GPIO_PIN_0
-#define ENC_HALL_C_GPIO_Port GPIOA
 #define MOT_WE_Pin GPIO_PIN_4
 #define MOT_WE_GPIO_Port GPIOC
 #define MOT_VE_Pin GPIO_PIN_1
 #define MOT_VE_GPIO_Port GPIOB
 #define MOT_WL_Pin GPIO_PIN_15
 #define MOT_WL_GPIO_Port GPIOB
-#define MOT_CURRENT_Pin GPIO_PIN_5
-#define MOT_CURRENT_GPIO_Port GPIOC
+#define MOT_CURRENT_Pin GPIO_PIN_4
+#define MOT_CURRENT_GPIO_Port GPIOA
+#define AD_POT_Pin GPIO_PIN_5
+#define AD_POT_GPIO_Port GPIOC
 #define MOT_UE_Pin GPIO_PIN_0
 #define MOT_UE_GPIO_Port GPIOB
 #define MOT_UL_Pin GPIO_PIN_13

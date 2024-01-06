@@ -1,10 +1,17 @@
 #include "hall.h"
 
+#if 0
+#define HALL_ANGLE_30 30
+#else
+#define HALL_ANGLE_30 65535 / 12
+#endif
+
 hall_encoder_t HallEnc = {
     .HallState = 0,
     .Direction = 0,
     .Placement = 120,
     .ElecAngle = 0,
+    .EdgeCount = 0,
     .HA_Port   = ENC_HALL_A_GPIO_Port,
     .HA_Pin    = ENC_HALL_A_Pin,
     .HB_Port   = ENC_HALL_B_GPIO_Port,
@@ -41,6 +48,15 @@ void HallEnc_ReadState(hall_encoder_t* pEnc)
 
     } while (HallStateCur != HallStatePrev);
 
+#if 1
+
+    if (pEnc->HallState != HallStateCur)
+    {
+        pEnc->EdgeCount++;
+    }
+
+#endif
+
     pEnc->HallState = HallStateCur;
 }
 
@@ -51,32 +67,36 @@ void HallEnc_Init(hall_encoder_t* pEnc)
     switch (pEnc->HallState)
     {
         case HALL_STATE_2:
-            pEnc->ElecAngle = 270;
+            pEnc->ElecAngle = HALL_ANGLE_30 * 9;  // 270
             break;
         case HALL_STATE_6:
-            pEnc->ElecAngle = 330;
+            pEnc->ElecAngle = HALL_ANGLE_30 * 11;  // 330
             break;
         case HALL_STATE_4:
-            pEnc->ElecAngle = 30;
+            pEnc->ElecAngle = HALL_ANGLE_30 * 1;  // 30
             break;
         case HALL_STATE_5:
-            pEnc->ElecAngle = 90;
+            pEnc->ElecAngle = HALL_ANGLE_30 * 3;  // 90
             break;
         case HALL_STATE_1:
-            pEnc->ElecAngle = 150;
+            pEnc->ElecAngle = HALL_ANGLE_30 * 5;  // 150
             break;
         case HALL_STATE_3:
-            pEnc->ElecAngle = 210;
+            pEnc->ElecAngle = HALL_ANGLE_30 * 7;  // 210
             break;
         default:
             break;
     }
 
-   // pEnc->ElecAngle -= 30;
+    // pEnc->ElecAngle -= 30;
 }
 
 void HallEnc_Update(hall_encoder_t* pEnc)
 {
+    HallEnc_Init(pEnc);
+
+    return;
+
     uint8_t HallStatePrev = pEnc->HallState;
     uint8_t DirectionPrev = pEnc->Direction;
 

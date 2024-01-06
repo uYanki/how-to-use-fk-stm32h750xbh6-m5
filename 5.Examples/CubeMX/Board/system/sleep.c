@@ -58,6 +58,8 @@ bool DelayNonBlock(uint32_t nStartTick, uint32_t nWaitTime)
 {
     uint32_t nDeltaTick;
     uint32_t nEndTick;
+	
+	if( nWaitTime ==0 )return  true;
 
     nEndTick = DelayNonGetTick();
 

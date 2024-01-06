@@ -1,0 +1,44 @@
+typedef struct {
+    uint32_t DataPre;
+    uint32_t DataCur;
+    uint32_t Th;
+} LevelCheck_t;
+
+typedef enum {
+    LEVEL_CHECK_RISING_EDGE,
+    LEVEL_CHECK_FALLING_EDGE,
+    LEVEL_CHECK_KEEP_LOW,
+    LEVEL_CHECK_KEEP_HIGH,
+} LevelCheck_e;
+
+LevelCheck_e LevelCheck(LevelCheck_t* p)
+{
+    LevelCheck_e res;
+
+    if (p->DataCur < p->Th)
+    {
+        if (p->DataPre < p->Th)
+        {
+            res = LEVEL_CHECK_KEEP_LOW;
+        }
+        else
+        {
+            res = LEVEL_CHECK_FALLING_EDGE;
+        }
+    }
+    else
+    {
+        if (p->DataPre > p->Th)
+        {
+            res = LEVEL_CHECK_KEEP_HIGH;
+        }
+        else
+        {
+            res = LEVEL_CHECK_RISING_EDGE;
+        }
+    }
+
+    p->DataPre = p->DataCur;
+
+    return res;
+}

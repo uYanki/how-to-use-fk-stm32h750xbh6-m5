@@ -38,7 +38,11 @@ typedef enum {
 static volatile eMBSndState eSndState;
 static volatile eMBRcvState eRcvState;
 
+#if __DCACHE_PRESENT == 1U
+ALIGN_32BYTES(volatile uint8_t ucRTUBuf[MB_SER_PDU_SIZE_MAX]) = {0};
+#else
 volatile uint8_t ucRTUBuf[MB_SER_PDU_SIZE_MAX] = {0};
+#endif
 
 static volatile uint8_t* pucSndBufferCur;
 static volatile uint16_t usSndBufferCount;
@@ -181,7 +185,9 @@ eMBErrorCode eMBRTUSend(uint8_t ucSlaveAddress, const uint8_t* pucFrame, uint16_
         Uart_SetWorkDir(UART_DIR_TX);
 
         __HAL_UART_ENABLE_IT(&huart1, UART_IT_TC);
+        SCB_CleanDCache_by_Addr((uint32_t*)ucRTUBuf, usSndBufferCount);  // call before TxDMA
         HAL_UART_Transmit_DMA(&huart1, (const uint8_t*)ucRTUBuf, usSndBufferCount);
+        // HAL_UART_Transmit(&huart1, ucRTUBuf, usSndBufferCount, 0xFFFF);
     }
     else
     {

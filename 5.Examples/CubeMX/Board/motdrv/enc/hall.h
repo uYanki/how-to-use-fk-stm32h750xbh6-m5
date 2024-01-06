@@ -22,11 +22,12 @@ typedef enum {
 typedef struct {
     float Speed_RPM;
 
-    uint8_t HallState;
-    uint8_t Direction;
-    int16_t ElecAngle;
-    uint8_t Placement;  // Sensor Placement
-    uint8_t PhaseShift;
+    uint8_t  HallState;
+    uint8_t  Direction;
+    int16_t  ElecAngle;
+    uint16_t EdgeCount;
+    uint8_t  Placement;  // Sensor Placement
+    uint8_t  PhaseShift;
 
     // GPIO
     GPIO_TypeDef* HA_Port;

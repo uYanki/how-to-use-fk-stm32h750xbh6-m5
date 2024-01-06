@@ -21,6 +21,11 @@
         "abs.h": "c",
         "inc.h": "c",
         "mag.h": "c",
-        "rot.h": "c"
+        "rot.h": "c",
+        "paratbl.h": "c",
+        "pwmctrl.h": "c",
+        "usbd_cdc_if.h": "c",
+        "tim.h": "c",
+        "limits": "c"
     }
 }
