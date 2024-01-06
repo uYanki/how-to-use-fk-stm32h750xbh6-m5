@@ -16,6 +16,16 @@ typedef enum {
     SECTOR_6,
 } sector_e;
 
+typedef struct {
+    float PP;
+    float Rs;
+    float Ls;
+    float Ld;
+    float Lq;
+    float Kemf;
+    float FluxM;
+} MotorPara_t;
+
 #define M_PI          3.1415926f  ///< π = 3.14159265358979323846
 #define M_PI_X2       6.2831852f  ///< 2π
 #define M_PI_X100     314         ///< 100π
@@ -100,6 +110,10 @@ typedef struct {
 
 } svpwm_t;
 
+void spdloop(void);
 void curloop(void);
+
+void ifoc(void);
+void ofoc(void);
 
 #endif

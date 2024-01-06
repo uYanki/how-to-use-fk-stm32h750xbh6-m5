@@ -3,6 +3,12 @@
 
 #include "main.h"
 
+#if 0
+#define HALL_ANGLE_30 30u
+#else
+#define HALL_ANGLE_30 65535u / 12
+#endif
+
 typedef enum {
     DIR_FWD  = +1,
     DIR_BACK = -1,

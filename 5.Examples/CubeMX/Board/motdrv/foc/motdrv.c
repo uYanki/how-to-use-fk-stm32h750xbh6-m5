@@ -1,4 +1,5 @@
 #include "motdrv.h"
+#include "pid.h"
 
 // https://blog.csdn.net/weixin_42887190/article/details/124289307
 
@@ -160,15 +161,9 @@ void clarke(clarke_t* v)
 
 void iclarke(iclarke_t* v)
 {
-#if 1  // zero_inject
     v->phase_a = v->alpha;
     v->phase_b = +0.5 * (M_SQRT3 * v->beta - v->alpha);
     v->phase_c = -0.5 * (M_SQRT3 * v->beta + v->alpha);
-#else  // svpwm
-    v->phase_a = v->beta;
-    v->phase_b = +0.5 * (M_SQRT3 * v->alpha - v->beta);
-    v->phase_c = -0.5 * (M_SQRT3 * v->alpha + v->beta);
-#endif
 }
 
 void park(park_t* v)
@@ -286,7 +281,69 @@ void sincos(sincos_t* v)
     v->cos = sincostab[p + 256];  // 256~1280
 }
 
-// void svpwm5(svpwm_t* v, clarke_t* k){}
+void svpwm7_2(svpwm_t* v, iclarke_t* k)  // 和下方的 svpwm7 是完全等效的
+{
+    f32 X = k->beta;
+    f32 Y = (k->beta + M_SQRT3 * k->alpha) * 0.5f;
+    f32 Z = Y - X;
+
+    v->sector = 3;
+
+    if (Y > 0)
+    {
+        v->sector -= 1;
+    }
+    if (Z > 0)
+    {
+        v->sector -= 1;
+    }
+    if (X < 0)
+    {
+        v->sector = 7 - v->sector;
+    }
+
+    switch (v->sector)
+    {
+        case 1:
+        case 4: {
+            v->Ta = Y;
+            v->Tb = X - Z;
+            v->Tc = -Y;
+            break;
+        }
+        case 2:
+        case 5: {
+            v->Ta = Z + Y;
+            v->Tb = X;
+            v->Tc = -X;
+            break;
+        }
+        default:
+        case 3:
+        case 6: {
+            v->Ta = Z;
+            v->Tb = -Z;
+            v->Tc = -(X + Y);
+            break;
+        }
+    }
+
+    // [-32768,+32767] => [-0.5,+0.5]
+    v->Ta /= 65535;
+    v->Tb /= 65535;
+    v->Tc /= 65535;
+
+    // [-0.5,0.5] => [0,1]
+    v->Ta += 0.5;
+    v->Tb += 0.5;
+    v->Tc += 0.5;
+
+    v->Ta *= v->period;
+    v->Tb *= v->period;
+    v->Tc *= v->period;
+}
+
+#include "system/sleep.h"
 
 void svpwm7(svpwm_t* v, iclarke_t* k)
 {
@@ -401,12 +458,93 @@ void svpwm7(svpwm_t* v, iclarke_t* k)
     v->Tc = tc * v->period;
 }
 
-void curloop(void)
+static PID_t SpdPid = {.Kp = 0.001, .Ki = 0.003, .Kd = 0.0, .ref = 0, .ramp = 10000, .lo = -32768, .hi = 32767, .Ts = 1.f / 8e3};
+static PID_t IdPid  = {.Kp = 0.001, .Ki = 0.003, .Kd = 0.0, .ref = 0, .ramp = 10000, .lo = -32768, .hi = 32767, .Ts = 1.f / 2e3};
+static PID_t IqPid  = {.Kp = 0.001, .Ki = 0.003, .Kd = 0.0, .ref = 0, .ramp = 10000, .lo = -32768, .hi = 32767, .Ts = 1.f / 2e3};
+
+void spdloop()
 {
 #if 1
+    ParaTbl.s16SpdTgt = ParaTbl.s16SpdDigRef;
+
+    SpdPid.fbk = ParaTbl.s16SpdFb;
+    SpdPid.ref = ParaTbl.s16SpdTgt;
+    PID_Handler_Tustin(&SpdPid);
+
+    ParaTbl.s16VqRef = SpdPid.out;
+
+    DelayBlockUS(125);  // Speed Loop 8kHz
+
+#else
 
 #endif
+}
 
+static int curloop_i = 0;
+
+void curloop(void)
+{
+#if 0
+
+    if (++curloop_i < 4)  // 4kHz
+    {
+        return;
+    }
+    else
+    {
+        curloop_i = 0;
+    }
+
+    // IdPid.fbk = ParaTbl.s16IdFb;
+    // IdPid.ref = ParaTbl.s16VdRef;
+    // PID_Handler_Tustin(&IdPid);
+
+    // ParaTbl.s16VdRef = IdPid.out;
+
+    IqPid.fbk = ParaTbl.s16IqFb;
+    IqPid.ref = ParaTbl.s16VqRef;
+    PID_Handler_Tustin(&IqPid);
+
+    ParaTbl.s16VqRef = IqPid.out;
+
+#else
+
+#endif
+}
+
+void ifoc(void)
+{
+    clarke_t clarke_v = {
+        .phase_a = ParaTbl.s16CurPhAFb,
+        .phase_b = ParaTbl.s16CurPhBFb,
+        .phase_c = ParaTbl.s16CurPhCFb,
+    };
+
+    clarke(&clarke_v);
+
+    sincos_t sincos_v = {
+        .angle = ParaTbl.u16ElecAngRef,
+    };
+
+    sincos(&sincos_v);
+
+    park_t park_v = {
+
+        .alpha = clarke_v.alpha,
+        .beta  = clarke_v.beta,
+
+        .sin = sincos_v.sin / 32768.f,
+        .cos = sincos_v.cos / 32768.f,
+    };
+
+    park(&park_v);
+
+    ParaTbl.s16IdFb = park_v.d;
+    ParaTbl.s16IqFb = park_v.q;
+}
+
+void ofoc(void)
+{
     sincos_t sincos_v = {
         .angle = ParaTbl.u16ElecAngRef,
     };
@@ -443,7 +581,12 @@ void curloop(void)
    
     zero_inject(&svpwm_v);
 #else
-    svpwm7(&svpwm_v, &iclarke_v);
+
+    // svpwm7(&svpwm_v, &iclarke_v);
+    // usb_printf("%d,%d,%d", (s16)svpwm_v.Ta, (s16)svpwm_v.Tb, (s16)svpwm_v.Tc);
+    svpwm7_2(&svpwm_v, &iclarke_v);
+    // usb_printf(",%d,%d,%d\n", (s16)svpwm_v.Ta, (s16)svpwm_v.Tb, (s16)svpwm_v.Tc);
+
     // overmod
 #endif
 
@@ -451,10 +594,7 @@ void curloop(void)
     ParaTbl.u16DutyPhb = svpwm_v.Tb;
     ParaTbl.u16DutyPhc = svpwm_v.Tc;
 
-    // usb_printf("%d,%d,%d", (s16)svpwm_v.Ta, (s16)svpwm_v.Tb, (s16)svpwm_v.Tc);
-    // usb_printf(",%d,%d,%d\n", (s16)svpwm_v.Ta, (s16)svpwm_v.Tb, (s16)svpwm_v.Tc);
     PWM_SetDuty(svpwm_v.Ta, svpwm_v.Tb, svpwm_v.Tc);
-
     __HAL_TIM_SetCompare(&htim1, TIM_CHANNEL_4, min(ParaTbl.u16DutyPha, min(ParaTbl.u16DutyPhb, ParaTbl.u16DutyPhc)));
     HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_4);
 }
@@ -543,4 +683,35 @@ void overmod()
     v->q = mod_q;
 
 #endif
+}
+
+f32 NtcConv(u16 advalue)
+{
+    static RO u16 tbl[98] = {28017, 26826, 25697, 24629, 23618, 22660, 21752, 20892, 20075, 19299, 18560, 18482, 18149, 17632, 16992, 16280, 15535, 14787, 14055, 13354, 12690, 12068, 11490, 10954, 10458, 10000, 9576, 9184, 8819, 8478, 8160, 7861, 7579, 7311, 7056, 6813, 6581, 6357, 6142, 5934, 5734, 5541, 5353, 5173, 4998, 4829, 4665, 4507, 4355, 4208, 4065, 3927, 3794, 3664, 3538, 3415, 3294, 3175, 3058, 2941, 2825, 2776, 2718, 2652, 2582, 2508, 2432, 2356, 2280, 2207, 2135, 2066, 2000, 1938, 1879, 1823, 1770, 1720, 1673, 1628, 1586, 1546, 1508, 1471, 1435, 1401, 1367, 1334, 1301, 1268, 1236, 1204, 1171, 1139, 1107, 1074, 1042, 1010};
+
+    u16 min = 0, max = ARRAY_SIZE(tbl) - 1, mid;  // index
+
+#if 0
+    f32 mv  = advalue / 4095.f * 3300.f;
+    f32 cmp = mv * 10 / (5 - mv / 1000);
+#else
+    // 上式的简化
+    u16 cmp = 100000000 / (62060606 / advalue - 10000);
+#endif
+
+    while ((max - min) > 1)
+    {
+        // 二分法查表
+        mid = (max + min) >> 1;
+        (tbl[mid] < cmp) ? (max = mid) : (min = mid);
+    }
+
+    f32 ret = min;
+
+    if (max != min)
+    {
+        ret += (f32)(tbl[min] - cmp) / (f32)(tbl[min] - tbl[max]);
+    }
+
+    return ret;
 }

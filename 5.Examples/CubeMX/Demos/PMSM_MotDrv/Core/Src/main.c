@@ -72,6 +72,9 @@ void        SpeedCalc(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
+#define HVBUS_COEFF   (40.2157f)  // 单位 V, 计算公式 (5.1k+200k) / (5.1k)
+#define CURRENT_COEFF (2.32558f)  // 单位 A, 放大倍数 A = (33K/10K+1), 采样电阻 Rshunt = 100mR, 计算公式 1/4.3/0.1
+
 extern void Modbus_StartReceive(void);
 
 ALIGN_32BYTES(uint16_t ADC1_Conv[4]);
@@ -157,8 +160,8 @@ int main(void)
 
     // ParaTbl.u16FocMode = FOC_MODE_MCU;
 
-    // ParaTbl.u16ElecAngSrc = ELEC_ANG_SRC_NONE;  // openloop
     ParaTbl.u16ElecAngSrc = ELEC_ANG_SRC_HALL;  // closeloop
+    // ParaTbl.u16ElecAngSrc = ELEC_ANG_SRC_NONE;  // openloop
 
     ParaTbl.u16PwmDutyMax   = htim1.Init.Period + 1;
     ParaTbl.u16MotPolePairs = 4;
@@ -174,12 +177,16 @@ int main(void)
     }
     else  // svpwm7
     {
-        ParaTbl.u16ElecOffset = 26000;
+        ParaTbl.u16ElecOffset = HALL_ANGLE_30 * 2;
         ParaTbl.s16VqRef      = 3000;
         ParaTbl.s16VdRef      = 0;
     }
 
     ParaTbl.u16RunState = 1;
+
+    // Hall as Inc
+    ParaTbl.u32EncRes    = 6 * ParaTbl.u16MotPolePairs;
+    ParaTbl.s16SpdDigRef = 300;
 
     /* USER CODE END 2 */
 
@@ -206,19 +213,23 @@ int main(void)
 
         if (DelayNonBlockMS(tAdTask, 2))
         {
-            SCB_InvalidateDCache_by_Addr((uint32_t*)&ADC1_Conv[0], ARRAY_SIZE(ADC1_Conv));
-            SCB_InvalidateDCache_by_Addr((uint32_t*)&ADC2_Conv[0], ARRAY_SIZE(ADC2_Conv));
-
-            void current_reconstruct(uint16_t Iz[2]);
-
-            uint16_t Iz[2] = {AD_MOT_CUR_U, AD_MOT_CUR_V};
-            current_reconstruct(Iz);  // 电流重构
-            usb_printf("%d,%d,%d,%d,%d\n", ParaTbl.s16CurPhAFb, ParaTbl.s16CurPhBFb, ParaTbl.s16CurPhCFb, AD_MOT_CUR_U, AD_MOT_CUR_V);
-
-            tAdTask = DelayNonGetTick();
+            // usb_printf("%d,%d,%d,%d,%d\n", ParaTbl.s16CurPhAFb, ParaTbl.s16CurPhBFb, ParaTbl.s16CurPhCFb, AD_MOT_CUR_U, AD_MOT_CUR_V);
 
             ParaTbl.s16AiU = AD_POT * 3300 / 65535 + ParaTbl.s16AiBias;
+
+            tAdTask = DelayNonGetTick();
         }
+
+        SCB_InvalidateDCache_by_Addr((uint32_t*)&ADC1_Conv[0], ARRAY_SIZE(ADC1_Conv));
+        SCB_InvalidateDCache_by_Addr((uint32_t*)&ADC2_Conv[0], ARRAY_SIZE(ADC2_Conv));
+
+        uint16_t Iz[2] = {
+            AD_MOT_CUR_U * CURRENT_COEFF * 3300 / 65535,
+            AD_MOT_CUR_V * CURRENT_COEFF * 3300 / 65535,
+        };
+
+        void current_reconstruct(uint16_t Iz[2]);
+        current_reconstruct(Iz);  // 电流重构
 
         //-------------------------------------------------
 
@@ -232,19 +243,25 @@ int main(void)
             ParaTbl.u16RunState ? PWM_Start() : PWM_Stop();
         }
 
+        //-------------------------------------------------
+
+        ifoc();
+
         if (ParaTbl.u16RunState)
         {
             if (ParaTbl.u16ElecAngSrc == ELEC_ANG_SRC_NONE)
             {
                 ParaTbl.u16ElecAngRef += ParaTbl.u16ElecAngInc;
-                // usb_printf("%d,%d\n", ParaTbl.u16ElecAngRef, ParaTbl.u16HallAngFb); // 霍尔偏置 ParaTbl.u16ElecOffset
+                // usb_printf("%d,%d\n", ParaTbl.u16ElecAngRef, ParaTbl.u16HallAngFb);  // 霍尔偏置 ParaTbl.u16ElecOffset
             }
             else if (ParaTbl.u16ElecAngSrc == ELEC_ANG_SRC_HALL)
             {
                 ParaTbl.u16ElecAngRef = ((u32)ParaTbl.u16HallAngFb + (u32)ParaTbl.u16ElecOffset) % UINT16_MAX;
             }
 
+            spdloop();
             curloop();
+            ofoc();
 
             if (ParaTbl.u16ElecAngSrc == ELEC_ANG_SRC_NONE)
             {
@@ -359,7 +376,8 @@ void SpeedCalc(void)
 
     if (DelayNonBlockMS(tSpdCalc, 1000))
     {
-        ParaTbl.s16SpdFb  = 60.f * HallEnc.EdgeCount / ParaTbl.u16MotPolePairs / 6;
+        // 乘2才是真实速度, 为啥
+        ParaTbl.s16SpdFb  = 2 * 60.f * HallEnc.EdgeCount / ParaTbl.u16MotPolePairs / 6;
         HallEnc.EdgeCount = 0;
 
         tSpdCalc = DelayNonGetTick();

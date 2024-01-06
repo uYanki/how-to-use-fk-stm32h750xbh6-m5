@@ -88,8 +88,8 @@ typedef struct __packed {
     s16 s16CurPhCFb;  ///< P0055 C相反馈电流 mA
     s16 s16IalphaFb;  ///< P0056 Alpha轴反馈电流
     s16 s16IbetaFb;   ///< P0057 Beta轴反馈电流
-    s16 s16IqFb;      ///< P0058 Q轴反馈电流
     s16 s16IdFb;      ///< P0059 D轴反馈电流
+    s16 s16IqFb;      ///< P0058 Q轴反馈电流
 
     s16 s16VdRef;      ///< P0060 D轴电压指令
     s16 s16VqRef;      ///< P0061 Q轴电压指令

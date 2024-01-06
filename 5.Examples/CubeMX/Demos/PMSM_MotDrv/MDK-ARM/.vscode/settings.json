@@ -26,6 +26,7 @@
         "pwmctrl.h": "c",
         "usbd_cdc_if.h": "c",
         "tim.h": "c",
-        "limits": "c"
+        "limits": "c",
+        "pid.h": "c"
     }
 }
