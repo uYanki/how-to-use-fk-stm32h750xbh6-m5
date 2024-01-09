@@ -1,6 +1,14 @@
 #include "motdrv.h"
 #include "pid.h"
 
+/**
+ * @brief LA034-040NN07A
+ * 极对数：手转一圈电机，两相间出现的正弦波数
+ * 相间电阻(三粗线): 13.5~13.8
+ * 相电阻 = 相间电阻/2 = 6.75
+ *
+ */
+
 // https://blog.csdn.net/weixin_42887190/article/details/124289307
 
 // 移相: https://shequ.stmicroelectronics.cn/thread-612527-1-1.html
@@ -458,22 +466,25 @@ void svpwm7(svpwm_t* v, iclarke_t* k)
     v->Tc = tc * v->period;
 }
 
-static PID_t SpdPid = {.Kp = 0.001, .Ki = 0.003, .Kd = 0.0, .ref = 0, .ramp = 10000, .lo = -32768, .hi = 32767, .Ts = 1.f / 8e3};
+static PID_t SpdPid = {.Kp = 0.005, .Ki = 0.001, .Kd = 0.0, .ref = 0, .ramp = 0, .lo = 0, .hi = 32767, .Ts = 1.f / 8e3};
 static PID_t IdPid  = {.Kp = 0.001, .Ki = 0.003, .Kd = 0.0, .ref = 0, .ramp = 10000, .lo = -32768, .hi = 32767, .Ts = 1.f / 2e3};
 static PID_t IqPid  = {.Kp = 0.001, .Ki = 0.003, .Kd = 0.0, .ref = 0, .ramp = 10000, .lo = -32768, .hi = 32767, .Ts = 1.f / 2e3};
 
 void spdloop()
 {
 #if 1
-    ParaTbl.s16SpdTgt = ParaTbl.s16SpdDigRef;
+    if (ParaTbl.u16ElecAngSrc != ELEC_ANG_SRC_NONE)
+    {
+        ParaTbl.s16SpdTgt = ParaTbl.s16SpdDigRef;
 
-    SpdPid.fbk = ParaTbl.s16SpdFb;
-    SpdPid.ref = ParaTbl.s16SpdTgt;
-    PID_Handler_Tustin(&SpdPid);
+        SpdPid.fbk = ParaTbl.s16SpdFb;
+        SpdPid.ref = ParaTbl.s16SpdTgt;
+        PID_Handler_Tustin(&SpdPid);
 
-    ParaTbl.s16VqRef = SpdPid.out;
+        ParaTbl.s16VqRef = SpdPid.out;
 
-    DelayBlockUS(125);  // Speed Loop 8kHz
+        DelayBlockUS(125);  // Speed Loop 8kHz
+    }
 
 #else
 
@@ -543,6 +554,8 @@ void ifoc(void)
     ParaTbl.s16IqFb = park_v.q;
 }
 
+static volatile int i = 0;
+
 void ofoc(void)
 {
     sincos_t sincos_v = {
@@ -595,72 +608,263 @@ void ofoc(void)
     ParaTbl.u16DutyPhc = svpwm_v.Tc;
 
     PWM_SetDuty(svpwm_v.Ta, svpwm_v.Tb, svpwm_v.Tc);
+
+    ADC2->CFGR &= ~(0x11 << 10u);
+    ADC2->CFGR |= ADC_EXTERNALTRIGCONVEDGE_RISING;
+
+#define SHUNT 1
+
+#if SHUNT == 1
     __HAL_TIM_SetCompare(&htim1, TIM_CHANNEL_4, min(ParaTbl.u16DutyPha, min(ParaTbl.u16DutyPhb, ParaTbl.u16DutyPhc)));
     HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_4);
+    i = 1;
+#elif SHUNT == 3
+    __HAL_TIM_SetCompare(&htim1, TIM_CHANNEL_4, svpwm_v.period - 10);
+    HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_4);
+#endif
 }
+
+#include "adc.h"
+volatile int n = 0;
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
 {
     if (hadc->Instance == ADC2)
     {
-        __HAL_TIM_SetCompare(&htim1, TIM_CHANNEL_4, max(ParaTbl.u16DutyPha, min(ParaTbl.u16DutyPhb, ParaTbl.u16DutyPhc)));
+#if SHUNT == 1
+        if (i == 1)
+        {
+            ADC2->CFGR &= ~(0x11 << 10u);
+            ADC2->CFGR |= ADC_EXTERNALTRIGCONVEDGE_FALLING;
+            __HAL_TIM_SetCompare(&htim1, TIM_CHANNEL_4, max(ParaTbl.u16DutyPha, min(ParaTbl.u16DutyPhb, ParaTbl.u16DutyPhc)));
+            HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_4);
+            i = 2;
+        }
+        else if (i == 2)
+        {
+            i = 3;
+            extern void cur_rs();
+            cur_rs();
+        }
+#elif SHUNT == 3
+        extern void cur_rs2();
+        cur_rs2();
+#endif
     }
 }
+
+#include "motdrv/enc/hall.h"
 
 void current_reconstruct(uint16_t Iz[2])  // shunt1
 {
-    int16_t temp0, temp1, Ibias = 0;
+    int16_t temp0 = Iz[0], temp1 = Iz[1], Ibias = 0;
 
     s16 s16CurPhAFb, s16CurPhBFb, s16CurPhCFb;
 
-    temp0 = Iz[0] - Ibias;
-    temp1 = Iz[1] - Ibias;
+    // int16_t Ibus1 = Iz[0] - Ibias;
+    // int16_t Ibus2 = Iz[1] - Ibias;
 
-    if (temp0 < 0) { temp0 = 0; }
-    if (temp1 < 0) { temp1 = 0; }
+    s16CurPhAFb              = temp0;
+    s16CurPhCFb              = 0 - temp1;
+    s16CurPhBFb              = 0 - s16CurPhAFb - s16CurPhCFb;
+    *(s16*)&DbgTbl.u16Buf[0] = s16CurPhAFb;
 
-    switch (ParaTbl.u16Sector)
-    {
-        case 1:  // 1
-            s16CurPhAFb = temp0;
-            s16CurPhCFb = 0 - temp1;
-            s16CurPhBFb = 0 - s16CurPhAFb - s16CurPhCFb;
-            break;
+    s16CurPhBFb              = temp0;
+    s16CurPhCFb              = 0 - temp1;
+    s16CurPhAFb              = 0 - s16CurPhBFb - s16CurPhCFb;
+    *(s16*)&DbgTbl.u16Buf[1] = s16CurPhAFb;
 
-        case 2:  // 2
-            s16CurPhBFb = temp0;
-            s16CurPhCFb = 0 - temp1;
-            s16CurPhAFb = 0 - s16CurPhBFb - s16CurPhCFb;
-            break;
+    s16CurPhBFb              = temp0;
+    s16CurPhAFb              = 0 - temp1;
+    s16CurPhCFb              = 0 - s16CurPhAFb - s16CurPhBFb;
+    *(s16*)&DbgTbl.u16Buf[2] = s16CurPhAFb;
 
-        case 3:  // 3
-            s16CurPhBFb = temp0;
-            s16CurPhAFb = 0 - temp1;
-            s16CurPhCFb = 0 - s16CurPhAFb - s16CurPhBFb;
-            break;
+    s16CurPhCFb              = temp0;
+    s16CurPhAFb              = 0 - temp1;
+    s16CurPhBFb              = 0 - s16CurPhCFb - s16CurPhAFb;
+    *(s16*)&DbgTbl.u16Buf[3] = s16CurPhAFb;
+    s16CurPhCFb              = temp0;
+    s16CurPhBFb              = 0 - temp1;
+    s16CurPhAFb              = 0 - s16CurPhCFb - s16CurPhBFb;
+    *(s16*)&DbgTbl.u16Buf[4] = s16CurPhAFb;
 
-        case 4:
-            s16CurPhCFb = temp0;
-            s16CurPhAFb = 0 - temp1;
-            s16CurPhBFb = 0 - s16CurPhCFb - s16CurPhAFb;
-            break;
-        case 5:
-            s16CurPhCFb = temp0;
-            s16CurPhBFb = 0 - temp1;
-            s16CurPhAFb = 0 - s16CurPhCFb - s16CurPhBFb;
-            break;
+    s16CurPhAFb              = temp0;
+    s16CurPhBFb              = 0 - temp1;
+    s16CurPhCFb              = 0 - s16CurPhAFb - s16CurPhBFb;
+    *(s16*)&DbgTbl.u16Buf[5] = s16CurPhAFb;
 
-        case 6:
-            s16CurPhAFb = temp0;
-            s16CurPhBFb = 0 - temp1;
-            s16CurPhCFb = 0 - s16CurPhAFb - s16CurPhBFb;
-            break;
-    }
+    // int16_t Ia = 0, Ib = 0, Ic = 0;
 
-    ParaTbl.s16CurPhAFb = 0.8 * ParaTbl.s16CurPhAFb + 0.2 * s16CurPhAFb;
-    ParaTbl.s16CurPhBFb = 0.8 * ParaTbl.s16CurPhBFb + 0.2 * s16CurPhBFb;
-    ParaTbl.s16CurPhCFb = 0.8 * ParaTbl.s16CurPhCFb + 0.2 * s16CurPhCFb;
+    // // 3  -1+5=7  %6 = 1
+
+    // int a = ParaTbl.u16Sector;
+
+    // extern hall_encoder_t HallEnc;
+
+    // a = HallEnc.HallState;
+
+    // int c = DbgTbl.u16Buf[0];
+
+    //     // if (a == b[c][0])
+    //     {
+    //         Ia = Ibus1;
+    //         Ic = -Ibus2;
+    //         Ib = -Ia - Ic;
+
+    //         *(s16*)&DbgTbl.u16Buf[0] = Ia;
+    //     }
+    //     // if (a == b[c][1])
+    //     {
+    //         Ic = Ibus1;
+    //         Ia = -Ibus2;
+    //         Ib = -Ia - Ic;
+
+    //         *(s16*)&DbgTbl.u16Buf[1] = Ia;
+    //     }
+    //     // if (a == b[c][2])
+    //     {
+    //         Ib = Ibus1;
+    //         Ia = -Ibus2;
+    //         Ic = -Ia - Ib;
+
+    //         *(s16*)&DbgTbl.u16Buf[2] = Ia;
+    //     }
+    //     // if (a == b[c][3])
+    //     {
+    //         Ia = Ibus1;
+    //         Ib = -Ibus2;
+    //         Ic = -Ia - Ib;
+
+    //         *(s16*)&DbgTbl.u16Buf[3] = Ia;
+    //     }
+    //     // if (a == b[c][4])
+    //     {
+    //         Ic = Ibus1;
+    //         Ib = -Ibus2;
+    //         Ia = -Ic - Ib;
+
+    //         *(s16*)&DbgTbl.u16Buf[4] = Ia;
+    //     }
+    //     // if (a == b[c][5])
+    //     {
+    //         Ib = Ibus1;
+    //         Ic = -Ibus2;
+    //         Ia = -Ic - Ib;
+
+    //         *(s16*)&DbgTbl.u16Buf[5] = Ia;
+    //     }
+
+    //     switch (ParaTbl.u16Sector)
+    //     {
+    // #if 1
+
+    //         // case 2:
+    //         //     Ia = Ibus1;
+    //         //     Ic = -Ibus2;
+    //         //     Ib = -Ia - Ic;
+    //         //     break;
+    //         // case 3:
+    //         //     Ic = Ibus1;
+    //         //     Ia = -Ibus2;
+    //         //     Ib = -Ia - Ic;
+    //         //     break;
+    //         // case 4:
+    //         //     Ib = Ibus1;
+    //         //     Ia = -Ibus2;
+    //         //     Ic = -Ia - Ib;
+    //         //     break;
+
+    //         // case 5:
+    //         //     Ia = Ibus1;
+    //         //     Ib = -Ibus2;
+    //         //     Ic = -Ia - Ib;
+    //         //     break;
+    //         // case 6:
+    //         //     Ic = Ibus1;
+    //         //     Ib = -Ibus2;
+    //         //     Ia = -Ic - Ib;
+    //         //     break;
+    //         // case 1:
+    //         //     Ib = Ibus1;
+    //         //     Ic = -Ibus2;
+    //         //     Ia = -Ic - Ib;
+    //         //     break;
+    // #else
+    //         case 6:
+    //             Ib = Ibus1;
+    //             Ic = -Ibus2;
+    //             Ia = -Ic - Ib;
+    //             break;
+    //         case 5:
+    //             Ia = Ibus1;
+    //             Ib = -Ibus2;
+    //             Ic = -Ia - Ib;
+    //             break;
+    //         case 4:  // 2
+    //             Ia = Ibus1;
+    //             Ic = -Ibus2;
+    //             Ib = -Ia - Ic;
+    //             break;
+    //         case 3:  // 3
+    //             Ic = Ibus1;
+    //             Ia = -Ibus2;
+    //             Ib = -Ia - Ic;
+    //             break;
+    //         case 2:  // 4
+    //             Ib = Ibus1;
+    //             Ia = -Ibus2;
+    //             Ic = -Ia - Ib;
+    //             break;
+    //         case 1:
+    //             Ic = Ibus1;
+    //             Ib = -Ibus2;
+    //             Ia = -Ic - Ib;
+    //             break;
+
+    // #endif
+    //         default: break;
+    //     }
+
+    // ParaTbl.s16CurPhAFb = Ia;
+    // ParaTbl.s16CurPhBFb = Ib;
+    // ParaTbl.s16CurPhCFb = Ic;
 }
+
+#if 0
+
+typedef struct {
+	__IO int16_t s16Vq;
+	__IO int16_t s16Vd;
+	__IO int16_t s16Valpha;
+	__IO int16_t s16Vbeta;
+	__IO int16_t s16Ia;
+	__IO int16_t s16Ib;
+	__IO int16_t s16Ic;
+	__IO int16_t s16Ialpha;
+	__IO int16_t s16Ibeta;
+	__IO int16_t s16Iq;
+	__IO int16_t s16Id;	
+} FOC_Struct;
+
+
+void FOC_Coordinate_Transformation(FOC_Struct* FOC, int16_t s16Cos, int16_t s16Sin);
+
+void FOC_Coordinate_Transformation(FOC_Struct* FOC, int16_t s16Cos, int16_t s16Sin)
+{
+    // a-b-c to alpha-beta (clark)
+    FOC->s16Ialpha = FOC->s16Ia;
+    FOC->s16Ibeta  = ((int32_t)(FOC->s16Ib - FOC->s16Ic) * 18918) >> 15;
+
+    // alpha-beta to d-q (park)
+    FOC->s16Id = ((int32_t)s16Cos * FOC->s16Ialpha + (int32_t)s16Sin * FOC->s16Ibeta) >> 15;
+    FOC->s16Iq = (-(int32_t)s16Sin * FOC->s16Ialpha + (int32_t)s16Cos * FOC->s16Ibeta) >> 15;
+
+    // d-q to alpfa-beta (inv park)
+    FOC->s16Valpha = ((int32_t)FOC->s16Vd * s16Cos - ((int32_t)FOC->s16Vq * s16Sin)) >> 15;
+    FOC->s16Vbeta  = ((int32_t)FOC->s16Vd * s16Sin + ((int32_t)FOC->s16Vq * s16Cos)) >> 15;
+}
+
+#endif
 
 void overmod()
 {
@@ -714,4 +918,106 @@ f32 NtcConv(u16 advalue)
     }
 
     return ret;
+}
+
+extern __IO uint16_t u16IWDGPingPong;
+extern __IO uint16_t u16ADC1[8];
+uint16_t             u16BEMF_A_B_VoltageDiffAverage;
+// extern void DAC12bit_show(int32_t s32DACShowData);
+/********************************************************************************************************
+**函数信息 ：BEMF_Speed_Detect()  //be executed every 1ms
+**功能描述 ：Detect the initial speed and direction by measuring BEMF , be executed every 1ms before motor startup
+**输入参数 ：2 phase BEMF
+**输出参数 ：BEMF speed and direction
+********************************************************************************************************/
+
+uint32_t static u32TempBEMFPhaseA12bit;
+uint32_t static u32TempBEMFPhaseB12bit;
+uint32_t u32TempBEMFPhaseABDiff12bit;
+uint32_t u32TempBEMFComparatorOut;
+uint8_t static u8BEMFComparatorOut;
+
+void BEMF_Speed_Detect(BEMF_Speed_Struct* Get_BEMF_Speed, u16 BEMFA_ADC_CHANNEL, u16 BEMFB_ADC_CHANNEL)
+{
+#define BEMF_MIN_PERIOD_TIME 3  // unit: 1ms, it define the minimum time of BEMF period.
+
+      // if (Get_BEMF_Speed->u16BEMFDetectionTime < BEMF_DETECT_LIMIT_TIME)  // unit : 1ms
+    if (1)
+    {
+        Get_BEMF_Speed->u16BEMFDetectionTime++;  // for control the time duration of BEMF detection
+
+        if (Get_BEMF_Speed->u16BEMFDetectionTime < 50)  // change 10ms to 50ms //20190402
+        {
+            Get_BEMF_Speed->bBEMFMotorIsRotatingFlag = 0;  // reset this flag
+            u16BEMF_A_B_VoltageDiffAverage           = 0;  // reset the difference bemf voltage between phase A,B
+        }
+
+        //----- Get phase A,B bemf voltage----------------------------
+        u32TempBEMFPhaseA12bit = (2 * u32TempBEMFPhaseA12bit + 1 * BEMFA_ADC_CHANNEL) / 3;  // get the BEMF A voltage //20190413
+        u32TempBEMFPhaseB12bit = (2 * u32TempBEMFPhaseB12bit + 1 * BEMFB_ADC_CHANNEL) / 3;  // get the BEMF B voltage //20190413
+
+        //-----detect the motor is standstill or rotating------------
+        if (u32TempBEMFPhaseA12bit > u32TempBEMFPhaseB12bit)
+        {
+            u32TempBEMFPhaseABDiff12bit = u32TempBEMFPhaseA12bit - u32TempBEMFPhaseB12bit;
+        }
+        else
+        {
+            u32TempBEMFPhaseABDiff12bit = u32TempBEMFPhaseB12bit - u32TempBEMFPhaseA12bit;
+        }
+
+        u16BEMF_A_B_VoltageDiffAverage = u16BEMF_A_B_VoltageDiffAverage + (u32TempBEMFPhaseABDiff12bit >> 2) - (u16BEMF_A_B_VoltageDiffAverage >> 2);
+        if (u16BEMF_A_B_VoltageDiffAverage > Get_BEMF_Speed->u16BEMFStandstillThresholdVolt)
+        {
+            Get_BEMF_Speed->bBEMFMotorIsRotatingFlag = 1;
+        }  // confirm the motor is rotating now
+
+        //-----if motor is rotating, then increase EMF_1ms_counter every 1ms, for getting the BEMF speed
+        if (Get_BEMF_Speed->bBEMFMotorIsRotatingFlag == 1) { Get_BEMF_Speed->u16BEMF1msCounter++; }  // for detecting rotor speed use only
+
+        //-----use the software to do a comparator function with hystersis------------------------
+        u32TempBEMFComparatorOut = u8BEMFComparatorOut;
+
+        if (u32TempBEMFPhaseA12bit > (u32TempBEMFPhaseB12bit + Get_BEMF_Speed->u16BEMFComparatorHystersis))
+        {
+            u8BEMFComparatorOut = 1;
+        }
+        else if (u32TempBEMFPhaseB12bit > (u32TempBEMFPhaseA12bit + Get_BEMF_Speed->u16BEMFComparatorHystersis))
+        {
+            u8BEMFComparatorOut = 0;
+        }
+
+        //-----detect the motor's initial speed and direction of rotation-----------------------
+        if ((u8BEMFComparatorOut != u32TempBEMFComparatorOut) && (Get_BEMF_Speed->u16BEMF1msCounter > BEMF_MIN_PERIOD_TIME))  // if yes, it means now get the cross point of BEMF A,B
+        {                                                                                                                     // LED_TOGGLE();
+            if (u8BEMFComparatorOut == 0)                                                                                     // if yes,it means the software comparator output from 1 t 0 (falling edge)
+            {
+                //---get the motor initial speed--------------------
+                Get_BEMF_Speed->u16BEMFSpeed      = ((uint32_t)120 * 1000) / ((uint16_t)Get_BEMF_Speed->u8BEMFPoleNumber * Get_BEMF_Speed->u16BEMF1msCounter);  // 20181108
+                Get_BEMF_Speed->u16BEMF1msCounter = 0;                                                                                                          // clear the BEMF time counter
+
+                Get_BEMF_Speed->u16BEMFPhaseABMiddlePoint12bit = (Get_BEMF_Speed->u16BEMFPhaseABMiddlePoint12bit + u32TempBEMFPhaseA12bit) / 2;
+                //---get the motor direction by comparing the midpoint potential voltage----------
+                if (u32TempBEMFPhaseA12bit > Get_BEMF_Speed->u16BEMFPhaseABMiddlePoint12bit)
+                {
+                    Get_BEMF_Speed->u8BEMFDirectionFlag = BEMF_DIR_CW;
+                }  // the initial direction is CW
+                else
+                {
+                    Get_BEMF_Speed->u8BEMFDirectionFlag = BEMF_DIR_CCW;
+                }  // the initial direction is CCW
+
+                if (Get_BEMF_Speed->u16BEMFDetectionTime > (BEMF_DETECT_LIMIT_TIME / 2))
+                {
+                    Get_BEMF_Speed->u16BEMFDetectionTime = BEMF_DETECT_LIMIT_TIME;
+                }  // got real bemf speed, so force out of the BEMF speed detection
+            }
+            //----get the midpoint potential voltage of phase A,B (add the 1/4 digital filter for average midpoint voltage)---------
+            //				u32TempBEMFVoltage12bit = Get_BEMF_Speed->u16BEMFPhaseABMiddlePoint12bit;
+            //				u32TempBEMFVoltage12bit = u32TempBEMFVoltage12bit+((u32TempBEMFPhaseA12bit+u32TempBEMFPhaseB12bit)>>3)-(u32TempBEMFVoltage12bit>>2);
+            //				Get_BEMF_Speed->u16BEMFPhaseABMiddlePoint12bit = u32TempBEMFVoltage12bit;
+            Get_BEMF_Speed->u16BEMFPhaseABMiddlePoint12bit = u32TempBEMFPhaseA12bit;
+        }
+    }
+    else { Get_BEMF_Speed->bBEMFResultValidFlag = 1; }
 }

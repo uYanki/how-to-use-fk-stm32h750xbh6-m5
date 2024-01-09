@@ -89,6 +89,44 @@ ALIGN_32BYTES(uint16_t ADC2_Conv[2]);
 
 #define AD_POT       ADC1_Conv[3]
 
+// https://www.zhihu.com/question/600128914
+// Speed_ElecAng_Rad =  PolePair * 2 * PI * Speed_ElecAng_RPM / 60
+
+#define I_COEFF    1 / 65535.f * 3300 / 4.3 / 0.1        // mA, 0.1R
+#define VBUS_COEFF 1 / 65535.f * 33 / 5.1 * (5.1 + 200)  // 0.1V
+
+void cur_rs2()
+{
+    ParaTbl.s16CurPhAFb = ADC1_Conv[0];
+    ParaTbl.s16CurPhBFb = ADC1_Conv[1];
+}
+
+void cur_rs()
+{
+    SCB_InvalidateDCache_by_Addr((uint32_t*)&ADC2_Conv[0], ARRAY_SIZE(ADC2_Conv));
+
+    uint16_t Iz[2] = {
+        ((float32_t)AD_MOT_CUR_U / 65535 * 3300 - 1000) / 4 / 0.1,  // mA
+        ((float32_t)AD_MOT_CUR_V / 65535 * 3300 - 1000) / 4 / 0.1,  // mA
+    };
+
+    void current_reconstruct(uint16_t Iz[2]);
+    current_reconstruct(Iz);  // 电流重构
+}
+
+BEMF_Speed_Struct bemf = {
+    .u8BEMFPoleNumber               = 2,
+    .u16BEMF1msCounter              = 0,
+    .u16BEMFSpeed                   = 0,
+    .u16BEMFPhaseABMiddlePoint12bit = 0,
+    .u8BEMFDirectionFlag            = BEMF_DIR_STANDSTILL,
+    .u16BEMFDetectionTime           = 0,
+    .bBEMFResultValidFlag           = 0,
+    .bBEMFMotorIsRotatingFlag       = 0,
+    .u16BEMFComparatorHystersis     = ((BEMF_COMPARATOR_HYSTERESIS * 4) / 5),
+    .u16BEMFStandstillThresholdVolt = ((BEMF_STANDSTILL_THRESHOLD_VOLTAGE * 4) / 5),
+};
+
 /* USER CODE END 0 */
 
 /**
@@ -158,27 +196,39 @@ int main(void)
 
     ParaTbl_Init();
 
+    // DbgTbl.u16Buf[0] = 2;
+    // DbgTbl.u16Buf[1] = 3;
+    // DbgTbl.u16Buf[2] = 4;
+    // DbgTbl.u16Buf[3] = 5;
+    // DbgTbl.u16Buf[4] = 6;
+    // DbgTbl.u16Buf[5] = 1;
+
     // ParaTbl.u16FocMode = FOC_MODE_MCU;
 
     ParaTbl.u16ElecAngSrc = ELEC_ANG_SRC_HALL;  // closeloop
     // ParaTbl.u16ElecAngSrc = ELEC_ANG_SRC_NONE;  // openloop
 
     ParaTbl.u16PwmDutyMax   = htim1.Init.Period + 1;
-    ParaTbl.u16MotPolePairs = 4;
+    ParaTbl.u16MotPolePairs = 2;
     ParaTbl.u16Umdc         = (int)11.2;
     ParaTbl.u16CarryFreq    = 16000;
 
     if (ParaTbl.u16ElecAngSrc == ELEC_ANG_SRC_NONE)  // zero inject
     {
-        ParaTbl.s16VqRef       = 32000;
+        // ParaTbl.s16VqRef       = 32000;
+        // ParaTbl.s16VdRef       = 0;
+        // ParaTbl.u16ElecAngInc  = 24;
+        // ParaTbl.u16WaitTimeInc = 8;
+
+        ParaTbl.s16VqRef       = 8000;
         ParaTbl.s16VdRef       = 0;
-        ParaTbl.u16ElecAngInc  = 24;
-        ParaTbl.u16WaitTimeInc = 8;
+        ParaTbl.u16ElecAngInc  = 4;
+        ParaTbl.u16WaitTimeInc = 40;
     }
     else  // svpwm7
     {
         ParaTbl.u16ElecOffset = HALL_ANGLE_30 * 2;
-        ParaTbl.s16VqRef      = 3000;
+        ParaTbl.s16VqRef      = 16000;
         ParaTbl.s16VdRef      = 0;
     }
 
@@ -186,7 +236,7 @@ int main(void)
 
     // Hall as Inc
     ParaTbl.u32EncRes    = 6 * ParaTbl.u16MotPolePairs;
-    ParaTbl.s16SpdDigRef = 300;
+    ParaTbl.s16SpdDigRef = 100;
 
     /* USER CODE END 2 */
 
@@ -211,9 +261,37 @@ int main(void)
 
         static uint32_t tAdTask = 0;
 
-        if (DelayNonBlockMS(tAdTask, 2))
+        if (DelayNonBlockMS(tAdTask, 1))
         {
+            // extern volatile int n;
+
             // usb_printf("%d,%d,%d,%d,%d\n", ParaTbl.s16CurPhAFb, ParaTbl.s16CurPhBFb, ParaTbl.s16CurPhCFb, AD_MOT_CUR_U, AD_MOT_CUR_V);
+            // usb_printf("%d,%d,%d,%d,%d,%d,%d,%d\n", ParaTbl.s16CurPhAFb, ParaTbl.s16CurPhBFb, ParaTbl.s16CurPhCFb, ParaTbl.s16IdFb, ParaTbl.s16IqFb, HallEnc.HallState, ParaTbl.u16Sector, DbgTbl.u16Buf[0]);
+
+            // usb_printf("%d,%d,%d,%d,%d,%d\n",
+            //            (s16)DbgTbl.u16Buf[0],
+            //            (s16)DbgTbl.u16Buf[1],
+            //            (s16)DbgTbl.u16Buf[2],
+            //            (s16)DbgTbl.u16Buf[3],
+            //            (s16)DbgTbl.u16Buf[4],
+            //            (s16)DbgTbl.u16Buf[5]);
+
+            // https://www.zhihu.com/question/606311981
+
+            BEMF_Speed_Detect(&bemf, AD_MOT_UE >> 4, AD_MOT_VE >> 4);
+            // usb_printf("%d,%f,%f\n", bemf.u16BEMFSpeed, AD_MOT_UE / 65535.f * 3.3, AD_MOT_VE / 65535.f * 3.3);
+
+            // 反电动势与磁链关系 https://blog.csdn.net/qq_38190041/article/details/110713520
+            // https://blog.csdn.net/qq_38190041/article/details/110848202
+
+            // matlab 反电动势仿真 https://blog.csdn.net/weixin_42362056/article/details/116766351
+            // Kt=9.55Ke, 9.55=60/2/pi
+
+            float32_t e = AD_MOT_UE / 65535.f * 3.3;
+            usb_printf("%f,%f,%f\n", e, 30 * e / 3.1415926 / ParaTbl.s16SpdFb / ParaTbl.u16MotPolePairs, ParaTbl.u16MotPolePairs * ParaTbl.s16SpdFb * 0.028595 * 2 * 3.14 / 60);
+            // e_max = 0.627773, wb = 0.028595
+
+            // usb_printf("%d,%d,%d,%d\n", AD_MOT_UE, AD_MOT_VE, AD_MOT_WE, HallEnc.HallState);
 
             ParaTbl.s16AiU = AD_POT * 3300 / 65535 + ParaTbl.s16AiBias;
 
@@ -221,15 +299,6 @@ int main(void)
         }
 
         SCB_InvalidateDCache_by_Addr((uint32_t*)&ADC1_Conv[0], ARRAY_SIZE(ADC1_Conv));
-        SCB_InvalidateDCache_by_Addr((uint32_t*)&ADC2_Conv[0], ARRAY_SIZE(ADC2_Conv));
-
-        uint16_t Iz[2] = {
-            AD_MOT_CUR_U * CURRENT_COEFF * 3300 / 65535,
-            AD_MOT_CUR_V * CURRENT_COEFF * 3300 / 65535,
-        };
-
-        void current_reconstruct(uint16_t Iz[2]);
-        current_reconstruct(Iz);  // 电流重构
 
         //-------------------------------------------------
 
@@ -252,7 +321,13 @@ int main(void)
             if (ParaTbl.u16ElecAngSrc == ELEC_ANG_SRC_NONE)
             {
                 ParaTbl.u16ElecAngRef += ParaTbl.u16ElecAngInc;
-                // usb_printf("%d,%d\n", ParaTbl.u16ElecAngRef, ParaTbl.u16HallAngFb);  // 霍尔偏置 ParaTbl.u16ElecOffset
+
+                // if (ParaTbl.u16ElecAngRef == 0)
+                // {
+                //     DbgTbl.u16Buf[0]++;
+                // }
+
+                //  usb_printf("%d,%d\n", ParaTbl.u16ElecAngRef, ParaTbl.u16HallAngFb);  // 霍尔偏置 ParaTbl.u16ElecOffset
             }
             else if (ParaTbl.u16ElecAngSrc == ELEC_ANG_SRC_HALL)
             {
@@ -374,10 +449,15 @@ void SpeedCalc(void)
 
     ParaTbl.u16HallAngFb = HallEnc.ElecAngle;
 
-    if (DelayNonBlockMS(tSpdCalc, 1000))
+    // T 测�?�法：脉冲间�? (适用于低�?)
+
+    if (DelayNonBlockMS(tSpdCalc, 1000))  // M 测�?�法: �?定时间内脉冲�? (适用于高�?)
     {
-        // 乘2才是真实速度, 为啥
-        ParaTbl.s16SpdFb  = 2 * 60.f * HallEnc.EdgeCount / ParaTbl.u16MotPolePairs / 6;
+        // ParaTbl.s32EncPos += HallEnc.EdgeCount;
+        // ParaTbl.u32EncTurns += ParaTbl.u32EncRes / ParaTbl.u32EncRes;
+        // ParaTbl.s32EncPos %= ParaTbl.u32EncRes;
+
+        ParaTbl.s16SpdFb  = 60.f * HallEnc.EdgeCount / ParaTbl.u16MotPolePairs / 6;
         HallEnc.EdgeCount = 0;
 
         tSpdCalc = DelayNonGetTick();

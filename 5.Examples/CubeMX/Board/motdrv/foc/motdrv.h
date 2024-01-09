@@ -116,4 +116,39 @@ void curloop(void);
 void ifoc(void);
 void ofoc(void);
 
+//
+
+#define BEMF_DIR_STANDSTILL    2
+#define BEMF_DIR_CW            1
+#define BEMF_DIR_CCW           0
+
+#define BEMF_DETECT_LIMIT_TIME 600  // unit: 1ms, it define the maximum time to detect BEMF's speed and direction
+
+typedef struct {
+    uint16_t u16BEMFSpeed;                    // motor BEMF's speed
+    uint8_t  u8BEMFDirectionFlag;             // motor BEMF's direction
+    uint16_t u16BEMF1msCounter;               // for BEMF's speed counter
+    uint16_t u16BEMFDetectionTime;            // BEMF's checking time define
+    uint16_t u16BEMFPhaseABMiddlePoint12bit;  // phase A,B's BEMF midpoint voltage
+    uint16_t u16BEMFComparatorHystersis;      // unit:12bit ADC,digital comparator's hysteresys
+    uint16_t u16BEMFStandstillThresholdVolt;  // unit:12bit ADC,define the standstill if BEMFA,B difference voltage under this limitation
+    uint8_t  bBEMFResultValidFlag;            // if 1, means the result of BEMF checking is valid
+    uint8_t  bBEMFMotorIsRotatingFlag;        // check the motor is rotating or not, 1:rotating now, 0:standstill
+    uint8_t  u8BEMFPoleNumber;                // motor pole number;
+} BEMF_Speed_Struct;
+
+void BEMF_Speed_Detect(BEMF_Speed_Struct* Get_BEMF_Speed, u16 BEMFA_ADC_CHANNEL, u16 BEMFB_ADC_CHANNEL);
+
+//----define the maximum difference voltage between BEMF A,B, if under this threshold voltage, the motor is in standstill status before startup---
+// 它定义了数字比较器的磁滞电压
+// 它定义了如果BEMFA，B在该限制下的电压差为静止
+#ifdef ENABLE_ROTOR_IPD1_FUNCTION
+#define BEMF_COMPARATOR_HYSTERESIS        100  // unit: mV,  it define the digital comparator's hysteresis voltage
+#define BEMF_STANDSTILL_THRESHOLD_VOLTAGE 200  // unit: mV,  it define the standstill if BEMFA,B difference voltage under this limitation
+#else
+#define BEMF_COMPARATOR_HYSTERESIS        30   // unit: mV,  it define the digital comparator's hysteresis voltage
+#define BEMF_STANDSTILL_THRESHOLD_VOLTAGE 200  // unit: mV,  it define the standstill if BEMFA,B difference voltage under this limitation
+#endif
+
+
 #endif

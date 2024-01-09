@@ -155,6 +155,10 @@ typedef struct __packed {
     u16 u16LogChCnt;     ///< P0209 数据记录通道数量设定
     u16 u16LogChSrc[8];  ///< P0210 数据记录通道地址设定 (数据源)
 
+    int16_t s16IaBias;
+    int16_t s16IbBias;
+    int16_t s16IcBias;
+
 } ParaTable_t;
 
 typedef struct __packed {

@@ -73,6 +73,8 @@ void Error_Handler(void);
 #define LED_GPIO_Port GPIOC
 #define MOT_UH_Pin GPIO_PIN_8
 #define MOT_UH_GPIO_Port GPIOA
+#define ADC_SAMP_Pin GPIO_PIN_2
+#define ADC_SAMP_GPIO_Port GPIOA
 #define MOT_WE_Pin GPIO_PIN_4
 #define MOT_WE_GPIO_Port GPIOC
 #define MOT_VE_Pin GPIO_PIN_1
